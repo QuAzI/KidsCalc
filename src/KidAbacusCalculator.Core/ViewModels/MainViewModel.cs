@@ -21,15 +21,12 @@ public sealed class MainViewModel : ViewModelBase
     {
         _taskGenerator = taskGenerator ?? throw new ArgumentNullException(nameof(taskGenerator));
 
-        IncrementCommand = new RelayCommand(
-            () => ChangeValue(1),
-            () => CurrentValue < MaximumAbacusValue && FeedbackState != FeedbackState.Correct);
-        DecrementCommand = new RelayCommand(
-            () => ChangeValue(-1),
-            () => CurrentValue > 0 && FeedbackState != FeedbackState.Correct);
-        ResetCommand = new RelayCommand(
-            ResetValue,
-            () => FeedbackState != FeedbackState.Correct);
+        IncrementPlaceCommand = new RelayCommand(
+            parameter => ChangePlace(parameter, 1),
+            parameter => CanChangePlace(ParsePlace(parameter), 1));
+        DecrementPlaceCommand = new RelayCommand(
+            parameter => ChangePlace(parameter, -1),
+            parameter => CanChangePlace(ParsePlace(parameter), -1));
         CheckAnswerCommand = new RelayCommand(
             CheckAnswer,
             () => FeedbackState != FeedbackState.Correct);
@@ -66,13 +63,7 @@ public sealed class MainViewModel : ViewModelBase
     public int DifficultyLimit
     {
         get => _difficultyLimit;
-        private set
-        {
-            if (SetProperty(ref _difficultyLimit, value))
-            {
-                OnPropertyChanged(nameof(DifficultyText));
-            }
-        }
+        private set => SetProperty(ref _difficultyLimit, value);
     }
 
     public FeedbackState FeedbackState
@@ -98,8 +89,6 @@ public sealed class MainViewModel : ViewModelBase
 
     public string ProblemText => CurrentTask.DisplayText;
 
-    public string DifficultyText => $"Уровень: до {DifficultyLimit}";
-
     public string AbacusDescription => $"На счётах число {CurrentValue}";
 
     public bool IsFeedbackVisible => FeedbackState != FeedbackState.None;
@@ -108,28 +97,64 @@ public sealed class MainViewModel : ViewModelBase
 
     public bool IsIncorrectFeedback => FeedbackState == FeedbackState.Incorrect;
 
-    public ICommand IncrementCommand { get; }
+    public ICommand IncrementPlaceCommand { get; }
 
-    public ICommand DecrementCommand { get; }
-
-    public ICommand ResetCommand { get; }
+    public ICommand DecrementPlaceCommand { get; }
 
     public ICommand CheckAnswerCommand { get; }
 
     public ICommand NewTaskCommand { get; }
 
-    private void ChangeValue(int delta)
+    private void ChangePlace(object? parameter, int direction)
     {
+        var placeValue = ParsePlace(parameter);
+        if (!CanChangePlace(placeValue, direction))
+        {
+            return;
+        }
+
         FeedbackState = FeedbackState.None;
         FeedbackText = string.Empty;
-        CurrentValue = Math.Clamp(CurrentValue + delta, 0, MaximumAbacusValue);
+        CurrentValue += placeValue * direction;
+
+        // Кнопок проверки больше нет: ответ засчитывается, как только
+        // собранное на спицах число совпало с примером.
+        if (CurrentValue == CurrentTask.Answer)
+        {
+            CheckAnswer();
+        }
     }
 
-    private void ResetValue()
+    // Разряд можно менять только в пределах одной цифры 0–9 и общего максимума счётов.
+    private bool CanChangePlace(int placeValue, int direction)
     {
-        FeedbackState = FeedbackState.None;
-        FeedbackText = string.Empty;
-        CurrentValue = CurrentTask.LeftOperand;
+        if (FeedbackState == FeedbackState.Correct)
+        {
+            return false;
+        }
+
+        if (placeValue is not (1 or 10 or 100) || direction is not (1 or -1))
+        {
+            return false;
+        }
+
+        var digit = CurrentValue / placeValue % 10;
+        if (direction > 0)
+        {
+            return digit < 9 && CurrentValue + placeValue <= MaximumAbacusValue;
+        }
+
+        return digit > 0;
+    }
+
+    private static int ParsePlace(object? parameter)
+    {
+        if (parameter is int placeValue)
+        {
+            return placeValue;
+        }
+
+        return int.TryParse(parameter?.ToString(), out var parsed) ? parsed : 0;
     }
 
     private void CheckAnswer()
@@ -184,9 +209,8 @@ public sealed class MainViewModel : ViewModelBase
 
     private void NotifyCommandStates()
     {
-        ((RelayCommand)IncrementCommand).NotifyCanExecuteChanged();
-        ((RelayCommand)DecrementCommand).NotifyCanExecuteChanged();
-        ((RelayCommand)ResetCommand).NotifyCanExecuteChanged();
+        ((RelayCommand)IncrementPlaceCommand).NotifyCanExecuteChanged();
+        ((RelayCommand)DecrementPlaceCommand).NotifyCanExecuteChanged();
         ((RelayCommand)CheckAnswerCommand).NotifyCanExecuteChanged();
     }
 }

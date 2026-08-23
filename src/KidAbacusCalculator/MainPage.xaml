@@ -10,197 +10,154 @@
     Title="Счёты">
 
     <ContentPage.Resources>
-        <Style x:Key="ValueButton" TargetType="Button">
+        <Style x:Key="RodButton" TargetType="Button">
             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFFFFF, Dark=#1E293B}" />
             <Setter Property="BorderColor" Value="{AppThemeBinding Light=#CBD5E1, Dark=#64748B}" />
             <Setter Property="BorderWidth" Value="2" />
             <Setter Property="CornerRadius" Value="22" />
             <Setter Property="FontAttributes" Value="Bold" />
             <Setter Property="FontSize" Value="28" />
-            <Setter Property="HeightRequest" Value="68" />
+            <Setter Property="HeightRequest" Value="52" />
+            <Setter Property="HorizontalOptions" Value="Center" />
+            <Setter Property="WidthRequest" Value="52" />
+            <Setter Property="Padding" Value="0" />
             <Setter Property="TextColor" Value="{AppThemeBinding Light=#1E293B, Dark=#F8FAFC}" />
-        </Style>
-
-        <Style x:Key="SecondaryButton" TargetType="Button">
-            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#FFFFFF, Dark=#1E293B}" />
-            <Setter Property="BorderColor" Value="{AppThemeBinding Light=#94A3B8, Dark=#94A3B8}" />
-            <Setter Property="BorderWidth" Value="2" />
-            <Setter Property="CornerRadius" Value="18" />
-            <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="FontSize" Value="17" />
-            <Setter Property="HeightRequest" Value="58" />
-            <Setter Property="TextColor" Value="{AppThemeBinding Light=#334155, Dark=#F8FAFC}" />
+            <Setter Property="VisualStateManager.VisualStateGroups">
+                <VisualStateGroupList>
+                    <VisualStateGroup x:Name="CommonStates">
+                        <VisualState x:Name="Normal" />
+                        <VisualState x:Name="Disabled">
+                            <VisualState.Setters>
+                                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#E2E8F0, Dark=#334155}" />
+                                <Setter Property="TextColor" Value="{AppThemeBinding Light=#94A3B8, Dark=#64748B}" />
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateGroupList>
+            </Setter>
         </Style>
     </ContentPage.Resources>
 
-    <ScrollView>
-        <Grid
-            Padding="18,20,18,28"
-            ColumnDefinitions="*"
-            HorizontalOptions="Center"
-            MaximumWidthRequest="540"
-            RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
-            RowSpacing="14">
+    <Grid
+        Padding="18,16,18,20"
+        ColumnDefinitions="*"
+        HorizontalOptions="Center"
+        MaximumWidthRequest="540"
+        RowDefinitions="Auto,*,Auto"
+        RowSpacing="12">
 
-            <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                <VerticalStackLayout Spacing="0">
-                    <Label
-                        FontAttributes="Bold"
-                        FontSize="28"
-                        SemanticProperties.HeadingLevel="Level1"
-                        Text="Весёлые счёты"
-                        TextColor="{AppThemeBinding Light=#172554, Dark=#F8FAFC}" />
-                    <Label
-                        FontSize="15"
-                        Text="Собери ответ бусинами"
-                        TextColor="{AppThemeBinding Light=#64748B, Dark=#CBD5E1}" />
-                </VerticalStackLayout>
+        <Border
+            Padding="20,14"
+            BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E293B}"
+            Stroke="{AppThemeBinding Light=#DDD6FE, Dark=#7C3AED}"
+            StrokeShape="RoundRectangle 24"
+            StrokeThickness="2">
+            <VerticalStackLayout Spacing="0">
+                <Label
+                    FontSize="14"
+                    Text="РЕШИ ПРИМЕР"
+                    TextColor="{AppThemeBinding Light=#64748B, Dark=#CBD5E1}" />
+                <Label
+                    FontAttributes="Bold"
+                    FontSize="44"
+                    SemanticProperties.HeadingLevel="Level1"
+                    Text="{Binding ProblemText}"
+                    TextColor="{AppThemeBinding Light=#172554, Dark=#FFFFFF}" />
+            </VerticalStackLayout>
+        </Border>
 
-                <Border
-                    Grid.Column="1"
-                    Padding="12,7"
-                    BackgroundColor="{AppThemeBinding Light=#EDE9FE, Dark=#4C1D95}"
-                    Stroke="#8B5CF6"
-                    StrokeShape="RoundRectangle 16">
-                    <Label
-                        FontAttributes="Bold"
-                        FontSize="14"
-                        Text="{Binding DifficultyText}"
-                        TextColor="{AppThemeBinding Light=#5B21B6, Dark=#F5F3FF}" />
-                </Border>
-            </Grid>
-
-            <Border
-                Grid.Row="1"
-                Padding="20,14"
-                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E293B}"
-                Stroke="{AppThemeBinding Light=#DDD6FE, Dark=#7C3AED}"
-                StrokeShape="RoundRectangle 24"
-                StrokeThickness="2">
-                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                    <Label
-                        FontSize="14"
-                        Text="РЕШИ ПРИМЕР"
-                        TextColor="{AppThemeBinding Light=#64748B, Dark=#CBD5E1}" />
-                    <Label
-                        Grid.Row="1"
-                        FontAttributes="Bold"
-                        FontSize="44"
-                        SemanticProperties.HeadingLevel="Level2"
-                        Text="{Binding ProblemText}"
-                        TextColor="{AppThemeBinding Light=#172554, Dark=#FFFFFF}" />
-
-                    <VerticalStackLayout
-                        Grid.RowSpan="2"
+        <Border
+            Grid.Row="1"
+            Padding="8,10"
+            BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#F8FAFC}"
+            Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#94A3B8}"
+            StrokeShape="RoundRectangle 24"
+            StrokeThickness="2">
+            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="6">
+                <Grid ColumnDefinitions="*,*,*">
+                    <Button
+                        Command="{Binding IncrementPlaceCommand}"
+                        CommandParameter="100"
+                        SemanticProperties.Hint="Добавить сотню"
+                        Style="{StaticResource RodButton}"
+                        Text="+" />
+                    <Button
                         Grid.Column="1"
-                        Spacing="0"
-                        VerticalOptions="Center">
-                        <Label
-                            FontSize="12"
-                            HorizontalTextAlignment="Center"
-                            Text="СЕЙЧАС"
-                            TextColor="{AppThemeBinding Light=#64748B, Dark=#CBD5E1}" />
-                        <Label
-                            FontAttributes="Bold"
-                            FontSize="38"
-                            HorizontalTextAlignment="Center"
-                            SemanticProperties.Description="{Binding AbacusDescription}"
-                            Text="{Binding CurrentValue}"
-                            TextColor="#F97316" />
-                    </VerticalStackLayout>
+                        Command="{Binding IncrementPlaceCommand}"
+                        CommandParameter="10"
+                        SemanticProperties.Hint="Добавить десяток"
+                        Style="{StaticResource RodButton}"
+                        Text="+" />
+                    <Button
+                        Grid.Column="2"
+                        Command="{Binding IncrementPlaceCommand}"
+                        CommandParameter="1"
+                        SemanticProperties.Hint="Добавить единицу"
+                        Style="{StaticResource RodButton}"
+                        Text="+" />
                 </Grid>
-            </Border>
 
-            <Border
-                Grid.Row="2"
-                HeightRequest="330"
-                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#F8FAFC}"
-                Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#94A3B8}"
-                StrokeShape="RoundRectangle 24"
-                StrokeThickness="2">
                 <controls:AbacusView
-                    Margin="8"
+                    Grid.Row="1"
                     SemanticProperties.Description="{Binding AbacusDescription}"
                     Value="{Binding CurrentValue}" />
-            </Border>
 
-            <Grid
-                Grid.Row="3"
-                ColumnDefinitions="*,*"
-                ColumnSpacing="12">
-                <Button
-                    Command="{Binding DecrementCommand}"
-                    SemanticProperties.Hint="Убрать одну бусину"
-                    Style="{StaticResource ValueButton}"
-                    Text="−1" />
-                <Button
-                    Grid.Column="1"
-                    Command="{Binding IncrementCommand}"
-                    SemanticProperties.Hint="Добавить одну бусину"
-                    Style="{StaticResource ValueButton}"
-                    Text="+1" />
+                <Grid Grid.Row="2" ColumnDefinitions="*,*,*">
+                    <Button
+                        Command="{Binding DecrementPlaceCommand}"
+                        CommandParameter="100"
+                        SemanticProperties.Hint="Убрать сотню"
+                        Style="{StaticResource RodButton}"
+                        Text="−" />
+                    <Button
+                        Grid.Column="1"
+                        Command="{Binding DecrementPlaceCommand}"
+                        CommandParameter="10"
+                        SemanticProperties.Hint="Убрать десяток"
+                        Style="{StaticResource RodButton}"
+                        Text="−" />
+                    <Button
+                        Grid.Column="2"
+                        Command="{Binding DecrementPlaceCommand}"
+                        CommandParameter="1"
+                        SemanticProperties.Hint="Убрать единицу"
+                        Style="{StaticResource RodButton}"
+                        Text="−" />
+                </Grid>
             </Grid>
+        </Border>
 
-            <Grid Grid.Row="4">
-                <!-- Результат объявляется screen reader из code-behind после смены состояния. -->
-                <Border
-                    Padding="16,12"
-                    BackgroundColor="{AppThemeBinding Light=#DCFCE7, Dark=#14532D}"
-                    IsVisible="{Binding IsCorrectFeedback}"
-                    Stroke="#22C55E"
-                    StrokeShape="RoundRectangle 18"
-                    StrokeThickness="2">
-                    <Label
-                        FontAttributes="Bold"
-                        FontSize="18"
-                        HorizontalTextAlignment="Center"
-                        Text="{Binding FeedbackText}"
-                        TextColor="{AppThemeBinding Light=#166534, Dark=#F0FDF4}" />
-                </Border>
-
-                <Border
-                    Padding="16,12"
-                    BackgroundColor="{AppThemeBinding Light=#FFF7ED, Dark=#7C2D12}"
-                    IsVisible="{Binding IsIncorrectFeedback}"
-                    Stroke="#F97316"
-                    StrokeShape="RoundRectangle 18"
-                    StrokeThickness="2">
-                    <Label
-                        FontAttributes="Bold"
-                        FontSize="18"
-                        HorizontalTextAlignment="Center"
-                        Text="{Binding FeedbackText}"
-                        TextColor="{AppThemeBinding Light=#9A3412, Dark=#FFF7ED}" />
-                </Border>
-            </Grid>
-
-            <Grid
-                Grid.Row="5"
-                ColumnDefinitions="*,1.25*,*"
-                ColumnSpacing="10">
-                <Button
-                    Command="{Binding ResetCommand}"
-                    SemanticProperties.Hint="Вернуть число в начало примера"
-                    Style="{StaticResource SecondaryButton}"
-                    Text="Сброс" />
-                <Button
-                    Grid.Column="1"
-                    BackgroundColor="#7C3AED"
-                    Command="{Binding CheckAnswerCommand}"
-                    CornerRadius="18"
+        <Grid Grid.Row="2">
+            <!-- Результат объявляется screen reader из code-behind после смены состояния. -->
+            <Border
+                Padding="16,12"
+                BackgroundColor="{AppThemeBinding Light=#DCFCE7, Dark=#14532D}"
+                IsVisible="{Binding IsCorrectFeedback}"
+                Stroke="#22C55E"
+                StrokeShape="RoundRectangle 18"
+                StrokeThickness="2">
+                <Label
                     FontAttributes="Bold"
                     FontSize="18"
-                    HeightRequest="58"
-                    SemanticProperties.Hint="Проверить собранный ответ"
-                    Text="Проверить"
-                    TextColor="White" />
-                <Button
-                    Grid.Column="2"
-                    Command="{Binding NewTaskCommand}"
-                    SemanticProperties.Hint="Показать новый пример"
-                    Style="{StaticResource SecondaryButton}"
-                    Text="Новый" />
-            </Grid>
+                    HorizontalTextAlignment="Center"
+                    Text="{Binding FeedbackText}"
+                    TextColor="{AppThemeBinding Light=#166534, Dark=#F0FDF4}" />
+            </Border>
+
+            <Border
+                Padding="16,12"
+                BackgroundColor="{AppThemeBinding Light=#FFF7ED, Dark=#7C2D12}"
+                IsVisible="{Binding IsIncorrectFeedback}"
+                Stroke="#F97316"
+                StrokeShape="RoundRectangle 18"
+                StrokeThickness="2">
+                <Label
+                    FontAttributes="Bold"
+                    FontSize="18"
+                    HorizontalTextAlignment="Center"
+                    Text="{Binding FeedbackText}"
+                    TextColor="{AppThemeBinding Light=#9A3412, Dark=#FFF7ED}" />
+            </Border>
         </Grid>
-    </ScrollView>
+    </Grid>
 </ContentPage>

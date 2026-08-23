@@ -42,20 +42,19 @@ public sealed class AbacusDrawable : IDrawable
 
         var previousDigits = _abacusBuilder.BuildDigits(_previousValue);
         var targetDigits = _abacusBuilder.BuildDigits(_targetValue);
-        var rodTop = 42f;
+        var rodTop = 16f;
         var rodBottom = Math.Max(rodTop + 100f, dirtyRect.Height - 54f);
-        var beadRadius = Math.Clamp(dirtyRect.Width / 24f, 9f, 18f);
+        var beadRadius = Math.Clamp(dirtyRect.Width / 18f, 9f, 18f);
         var beadDiameter = beadRadius * 2f;
         var step = Math.Min(
             beadDiameter * 0.78f,
             (rodBottom - rodTop) / (BeadsPerRod + 1));
-        string[] labels = ["СОТНИ", "ДЕСЯТКИ", "ЕДИНИЦЫ"];
 
         // Каждый разряд рисуется одинаково, но позиции бусин интерполируются
         // между старой и новой цифрой — это сохраняет смысл движения при анимации.
         for (var rodIndex = 0; rodIndex < targetDigits.Count; rodIndex++)
         {
-            var centerX = dirtyRect.Width * (rodIndex + 1) / 4f;
+            var centerX = dirtyRect.Width * (rodIndex + 0.5f) / 3f;
             var previousDigit = previousDigits[rodIndex].Value;
             var targetDigit = targetDigits[rodIndex].Value;
 
@@ -68,8 +67,7 @@ public sealed class AbacusDrawable : IDrawable
                 step,
                 previousDigit,
                 targetDigit,
-                ActiveColors[rodIndex],
-                labels[rodIndex]);
+                ActiveColors[rodIndex]);
         }
 
         canvas.RestoreState();
@@ -84,20 +82,8 @@ public sealed class AbacusDrawable : IDrawable
         float step,
         int previousDigit,
         int targetDigit,
-        Color activeColor,
-        string label)
+        Color activeColor)
     {
-        canvas.FontColor = Color.FromArgb("#334155");
-        canvas.FontSize = 11f;
-        canvas.DrawString(
-            label,
-            centerX - 52f,
-            4f,
-            104f,
-            24f,
-            HorizontalAlignment.Center,
-            VerticalAlignment.Center);
-
         canvas.StrokeColor = Color.FromArgb("#475569");
         canvas.StrokeSize = 4f;
         canvas.DrawLine(centerX, rodTop - 8f, centerX, rodBottom + 8f);

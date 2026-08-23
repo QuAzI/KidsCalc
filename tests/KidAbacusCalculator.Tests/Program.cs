@@ -12,7 +12,8 @@ internal static class Program
         ("TaskGenerator соблюдает границы", TaskGeneratorKeepsAnswersInRange),
         ("AbacusBuilder раскладывает число", AbacusBuilderSplitsDigits),
         ("MainViewModel проверяет и исправляет ответ", MainViewModelChecksAnswer),
-        ("MainViewModel повышает уровень", MainViewModelRaisesDifficulty)
+        ("MainViewModel повышает уровень", MainViewModelRaisesDifficulty),
+        ("MainViewModel меняет разряды колонками", MainViewModelChangesPlaces)
     ];
 
     public static int Main()
@@ -100,13 +101,12 @@ internal static class Program
         True(viewModel.IsIncorrectFeedback, "Ошибочный ответ не распознан.");
         True(viewModel.FeedbackText.Contains('5'), "Нет подсказки с правильным ответом.");
 
-        viewModel.IncrementCommand.Execute(null);
-        viewModel.IncrementCommand.Execute(null);
-        viewModel.CheckAnswerCommand.Execute(null);
+        viewModel.IncrementPlaceCommand.Execute("1");
+        viewModel.IncrementPlaceCommand.Execute("1");
 
         True(viewModel.IsCorrectFeedback, "Правильный ответ не распознан.");
         False(
-            viewModel.IncrementCommand.CanExecute(null),
+            viewModel.IncrementPlaceCommand.CanExecute("1"),
             "После правильного ответа значение всё ещё можно менять.");
     }
 
@@ -132,6 +132,31 @@ internal static class Program
         Equal(20, viewModel.DifficultyLimit);
         viewModel.NewTaskCommand.Execute(null);
         Equal(20, generator.RequestedLimits[^1]);
+    }
+
+    private static void MainViewModelChangesPlaces()
+    {
+        var generator = new FakeTaskGenerator(
+            new TaskItem(3, 2, MathOperation.Addition));
+        var viewModel = new MainViewModel(generator);
+
+        Equal(3, viewModel.CurrentValue);
+        False(
+            viewModel.DecrementPlaceCommand.CanExecute("100"),
+            "Сотни уменьшаются при нулевой цифре.");
+
+        viewModel.IncrementPlaceCommand.Execute("100");
+        Equal(103, viewModel.CurrentValue);
+        viewModel.DecrementPlaceCommand.Execute("100");
+        Equal(3, viewModel.CurrentValue);
+
+        viewModel.IncrementPlaceCommand.Execute("10");
+        Equal(13, viewModel.CurrentValue);
+        viewModel.DecrementPlaceCommand.Execute("10");
+        viewModel.IncrementPlaceCommand.Execute("1");
+        viewModel.IncrementPlaceCommand.Execute("1");
+        Equal(5, viewModel.CurrentValue);
+        True(viewModel.IsCorrectFeedback, "Совпадение с ответом не засчитано автоматически.");
     }
 
     private static void Equal<T>(T expected, T actual)
