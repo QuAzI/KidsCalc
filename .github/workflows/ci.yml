@@ -57,12 +57,13 @@ jobs:
 
       - name: Restore Windows
         # restore has no --framework (-f is --force → MSB1008). Override TargetFrameworks
-        # to the Windows TFM (csproj also lists android). -r win-x64 downloads the
-        # runtime pack that unpackaged MAUI Windows needs (NETSDK1112 without it).
-        run: >
-          dotnet restore src/KidAbacusCalculator/KidAbacusCalculator.csproj
-          -p:TargetFrameworks=net10.0-windows10.0.19041.0
-          -r win-x64
+        # to the Windows TFM (csproj also lists android). RuntimeIdentifiers (not -r)
+        # pulls the win-x64 runtime pack (NETSDK1112) and keeps RID-less TFM targets;
+        # -r alone rewrites Core assets to net10.0/win-x64 and the Core build then
+        # fails looking for net10.0. Restore Core last so its assets stay on net10.0.
+        run: |
+          dotnet restore src/KidAbacusCalculator/KidAbacusCalculator.csproj -p:TargetFrameworks=net10.0-windows10.0.19041.0 -p:RuntimeIdentifiers=win-x64
+          dotnet restore src/KidAbacusCalculator.Core/KidAbacusCalculator.Core.csproj --force
 
       - name: Build Windows (Release)
         run: >

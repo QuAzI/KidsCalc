@@ -25,14 +25,28 @@ jobs:
       - name: Install MAUI Windows workload
         run: dotnet workload install maui-windows --skip-manifest-update
 
+      - name: Restore Windows
+        # -f is not enough at restore: csproj also lists android, and android+win-x64
+        # asks for Mono.win-x64 (NU1102). RuntimeIdentifiers pulls the win-x64 pack
+        # without -r. -r rewrites Core assets to net10.0/win-x64; Core then builds as
+        # net10.0 and fails. Restore Core --force last so its assets stay on net10.0.
+        run: |
+          dotnet restore src/KidAbacusCalculator/KidAbacusCalculator.csproj -p:TargetFrameworks=net10.0-windows10.0.19041.0 -p:RuntimeIdentifiers=win-x64
+          dotnet restore src/KidAbacusCalculator.Core/KidAbacusCalculator.Core.csproj --force
+
       - name: Publish Windows win-x64
+        # Self-contained Release enables ReadyToRun; restore did not pull the R2R
+        # crossgen pack, and --no-restore then fails. Unpackaged MAUI does not need R2R.
         run: >
           dotnet publish src/KidAbacusCalculator/KidAbacusCalculator.csproj
           -f net10.0-windows10.0.19041.0
           -c Release
           -r win-x64
           --self-contained true
+          --no-restore
+          -p:TargetFrameworks=net10.0-windows10.0.19041.0
           -p:WindowsPackageType=None
+          -p:PublishReadyToRun=false
           -o artifacts/windows-win-x64
 
       - name: Upload Windows win-x64
@@ -71,11 +85,20 @@ jobs:
           -storepass android -keypass android
           -dname "CN=KidAbacusCalculator CI, OU=CI, O=KidAbacusCalculator, L=Local, S=Local, C=US"
 
+      - name: Restore Android
+        # -r android-arm64 on publish would restore Core as net10.0/android-arm64
+        # and the Core compile then looks for net10.0.
+        run: |
+          dotnet restore src/KidAbacusCalculator/KidAbacusCalculator.csproj -p:TargetFrameworks=net10.0-android -p:RuntimeIdentifiers=android-arm64
+          dotnet restore src/KidAbacusCalculator.Core/KidAbacusCalculator.Core.csproj --force
+
       - name: Publish Android APK
         run: >
           dotnet publish src/KidAbacusCalculator/KidAbacusCalculator.csproj
           -f net10.0-android
           -c Release
+          -r android-arm64
+          --no-restore
           -p:AndroidPackageFormat=apk
           -p:AndroidKeyStore=true
           -p:AndroidSigningKeyStore=${{ github.workspace }}/kidabacus-ci.keystore

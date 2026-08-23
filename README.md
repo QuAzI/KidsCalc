@@ -19,13 +19,13 @@
 **Windows** (собирать на Windows). Копировать всю папку `artifacts/windows`, запускать `KidAbacusCalculator.exe`:
 
 ```
-dotnet publish src/KidAbacusCalculator/KidAbacusCalculator.csproj -c Release -f net10.0-windows10.0.19041.0 -r win-x64 --self-contained -o artifacts/windows
+dotnet publish src/KidAbacusCalculator/KidAbacusCalculator.csproj -c Release -f net10.0-windows10.0.19041.0 -r win-x64 --self-contained -p:TargetFrameworks=net10.0-windows10.0.19041.0 -o artifacts/windows
 ```
 
 **Android.** APK ищите в `artifacts/android` или в `src/KidAbacusCalculator/bin`. Подпись — как в `release.yml`; ключ CI только для установки на устройство, не для магазина:
 
 ```
-dotnet publish src/KidAbacusCalculator/KidAbacusCalculator.csproj -c Release -f net10.0-android -o artifacts/android
+dotnet publish src/KidAbacusCalculator/KidAbacusCalculator.csproj -c Release -f net10.0-android -r android-arm64 -o artifacts/android
 ```
 
 ## Тесты
