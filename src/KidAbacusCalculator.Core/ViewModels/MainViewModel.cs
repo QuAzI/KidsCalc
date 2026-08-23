@@ -7,6 +7,7 @@ namespace KidAbacusCalculator.Core.ViewModels;
 public sealed class MainViewModel : ViewModelBase
 {
     private readonly ITaskGenerator _taskGenerator;
+    private readonly ISoundService? _soundService;
     private TaskItem _currentTask = null!;
     private int _currentValue;
     private int _difficultyLimit = 10;
@@ -16,9 +17,10 @@ public sealed class MainViewModel : ViewModelBase
     private FeedbackState _feedbackState;
     private string _feedbackText = string.Empty;
 
-    public MainViewModel(ITaskGenerator taskGenerator)
+    public MainViewModel(ITaskGenerator taskGenerator, ISoundService? soundService = null)
     {
         _taskGenerator = taskGenerator ?? throw new ArgumentNullException(nameof(taskGenerator));
+        _soundService = soundService;
 
         IncrementPlaceCommand = new RelayCommand(
             parameter => ChangePlace(parameter, 1),
@@ -128,6 +130,7 @@ public sealed class MainViewModel : ViewModelBase
         FeedbackText = string.Empty;
         CurrentValue += placeValue * direction;
         BeadsMoved?.Invoke(this, EventArgs.Empty);
+        _soundService?.PlayBead();
     }
 
     // Перенос и заём идут через всё число: 9+1 в единицах даёт 10,
@@ -182,6 +185,7 @@ public sealed class MainViewModel : ViewModelBase
             }
 
             FeedbackState = FeedbackState.Correct;
+            _soundService?.PlayCorrect();
             return;
         }
 

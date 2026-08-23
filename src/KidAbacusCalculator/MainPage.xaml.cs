@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using KidAbacusCalculator.Core.Services;
 using KidAbacusCalculator.Core.ViewModels;
 
 namespace KidAbacusCalculator;
@@ -6,16 +7,25 @@ namespace KidAbacusCalculator;
 public partial class MainPage : ContentPage
 {
     private readonly MainViewModel _viewModel;
+    private readonly ISoundService _soundService;
     private IDispatcherTimer? _answerCheckTimer;
     private IDispatcherTimer? _nextTaskTimer;
 
-    public MainPage(MainViewModel viewModel)
+    public MainPage(MainViewModel viewModel, ISoundService soundService)
     {
         InitializeComponent();
         _viewModel = viewModel;
+        _soundService = soundService;
         BindingContext = viewModel;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         _viewModel.BeadsMoved += OnBeadsMoved;
+        Loaded += OnLoaded;
+    }
+
+    private void OnLoaded(object? sender, EventArgs eventArgs)
+    {
+        Loaded -= OnLoaded;
+        _soundService.WarmUp();
     }
 
     private void OnBeadsMoved(object? sender, EventArgs eventArgs)

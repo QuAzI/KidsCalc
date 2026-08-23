@@ -14,7 +14,8 @@ internal static class Program
         ("MainViewModel проверяет и исправляет ответ", MainViewModelChecksAnswer),
         ("MainViewModel повышает уровень", MainViewModelRaisesDifficulty),
         ("MainViewModel меняет разряды колонками", MainViewModelChangesPlaces),
-        ("MainViewModel переносит и занимает разряды", MainViewModelCarriesAndBorrows)
+        ("MainViewModel переносит и занимает разряды", MainViewModelCarriesAndBorrows),
+        ("MainViewModel включает звуки бусин и верного ответа", MainViewModelPlaysSounds)
     ];
 
     public static int Main()
@@ -214,6 +215,23 @@ internal static class Program
             "Разряд вне счётов принимается.");
     }
 
+    private static void MainViewModelPlaysSounds()
+    {
+        var sounds = new FakeSoundService();
+        var generator = new FakeTaskGenerator(
+            new TaskItem(3, 2, MathOperation.Addition));
+        var viewModel = new MainViewModel(generator, sounds);
+
+        viewModel.IncrementPlaceCommand.Execute("1");
+        Equal(1, sounds.BeadCount);
+        Equal(0, sounds.CorrectCount);
+
+        viewModel.IncrementPlaceCommand.Execute("1");
+        Equal(2, sounds.BeadCount);
+        viewModel.CheckAnswerCommand.Execute(null);
+        Equal(1, sounds.CorrectCount);
+    }
+
     private static void Equal<T>(T expected, T actual)
     {
         if (!EqualityComparer<T>.Default.Equals(expected, actual))
@@ -247,6 +265,21 @@ internal static class Program
 
         throw new InvalidOperationException(
             $"Ожидалось исключение {typeof(TException).Name}.");
+    }
+
+    private sealed class FakeSoundService : ISoundService
+    {
+        public int BeadCount { get; private set; }
+
+        public int CorrectCount { get; private set; }
+
+        public void PlayBead() => BeadCount++;
+
+        public void PlayCorrect() => CorrectCount++;
+
+        public void WarmUp()
+        {
+        }
     }
 
     private sealed class FakeTaskGenerator(params TaskItem[] tasks) : ITaskGenerator
