@@ -10,6 +10,7 @@ internal static class Program
     [
         ("TaskItem вычисляет операции", TaskItemCalculatesOperations),
         ("TaskGenerator соблюдает границы", TaskGeneratorKeepsAnswersInRange),
+        ("TaskGenerator не ставит 0 в путающие позиции", TaskGeneratorAvoidsConfusingZeros),
         ("AbacusBuilder раскладывает число", AbacusBuilderSplitsDigits),
         ("MainViewModel проверяет и исправляет ответ", MainViewModelChecksAnswer),
         ("MainViewModel повышает уровень", MainViewModelRaisesDifficulty),
@@ -79,6 +80,32 @@ internal static class Program
                         task.LeftOperand >= task.RightOperand,
                         "Вычитание создаёт отрицательный ответ.");
                 }
+            }
+        }
+    }
+
+    private static void TaskGeneratorAvoidsConfusingZeros()
+    {
+        var generator = new TaskGenerator(new Random(42));
+
+        // 0 справа в сложении и любой 0 в вычитании выглядят как «пустой» ход.
+        foreach (var maximum in new[] { 1, 10, 20 })
+        {
+            for (var index = 0; index < 2_000; index++)
+            {
+                var task = generator.Create(maximum);
+
+                if (task.Operation == MathOperation.Addition)
+                {
+                    True(
+                        task.RightOperand >= 1,
+                        $"Сложение с нулём справа: {task.DisplayText}");
+                    continue;
+                }
+
+                True(
+                    task.LeftOperand >= 1 && task.RightOperand >= 1,
+                    $"Вычитание с нулём: {task.DisplayText}");
             }
         }
     }

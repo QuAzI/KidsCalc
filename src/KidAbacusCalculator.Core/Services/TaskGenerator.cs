@@ -26,17 +26,17 @@ public sealed class TaskGenerator : ITaskGenerator
             ? MathOperation.Addition
             : MathOperation.Subtraction;
 
-        // Границы подбираются отдельно: сумма не превышает уровень,
-        // а вычитание всегда даёт неотрицательный результат.
+        // 0 в сложении только слева (5+0 путает), вычитание без нулей (5-0, 0-0).
+        // Сумма не выше уровня, вычитание неотрицательное.
         if (operation == MathOperation.Addition)
         {
-            var left = _random.Next(maximumAnswer + 1);
-            var right = _random.Next(maximumAnswer - left + 1);
+            var left = _random.Next(maximumAnswer);
+            var right = _random.Next(1, maximumAnswer - left + 1);
             return new TaskItem(left, right, operation);
         }
 
-        var minuend = _random.Next(maximumAnswer + 1);
-        var subtrahend = _random.Next(minuend + 1);
+        var minuend = _random.Next(1, maximumAnswer + 1);
+        var subtrahend = _random.Next(1, minuend + 1);
         return new TaskItem(minuend, subtrahend, operation);
     }
 }
