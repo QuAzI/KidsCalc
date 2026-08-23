@@ -4,7 +4,7 @@ namespace KidAbacusCalculator.Services;
 
 public sealed class MauiSoundService : ISoundService
 {
-    private const int SampleRate = 22_050;
+    private const int SampleRate = 44_100;
     private readonly byte[] _warmupSound;
     private readonly byte[] _beadSound;
     private readonly byte[] _correctSound;
@@ -121,49 +121,90 @@ public sealed class MauiSoundService : ISoundService
     {
         lock (_playGate)
         {
-            EnsureAndroidTrack();
-            var track = _audioTrack!;
-            if (track.PlayState != Android.Media.PlayState.Stopped)
+            try
             {
-                track.Stop();
+                PlayAndroidLocked(pcm, volume);
             }
-
-            track.Flush();
-            track.SetVolume(volume);
-            track.Play();
-            track.Write(pcm, 0, pcm.Length, Android.Media.WriteMode.Blocking);
+            catch
+            {
+                ReleaseAndroidTrack();
+            }
         }
     }
 
-    private void EnsureAndroidTrack()
+    // STREAM не стартует, пока не заполнен аппаратный буфер: щелчок бусины ~40 мс
+    // короче этого буфера, поэтому Write заканчивался, а динамик молчал.
+    // STATIC загружает весь PCM и сразу Play. 44100 Гц — родная частота большинства устройств.
+    private void PlayAndroidLocked(byte[] pcm, float volume)
     {
-        if (_audioTrack is not null)
-        {
-            return;
-        }
-
         var minBuffer = Android.Media.AudioTrack.GetMinBufferSize(
             SampleRate,
             Android.Media.ChannelOut.Mono,
             Android.Media.Encoding.Pcm16bit);
-        var bufferSize = Math.Max(minBuffer, SampleRate / 2);
-        _audioTrack = new Android.Media.AudioTrack.Builder()
-            .SetAudioAttributes(
-                new Android.Media.AudioAttributes.Builder()
-                    .SetUsage(Android.Media.AudioUsageKind.Game)
-                    .SetContentType(Android.Media.AudioContentType.Sonification)
-                    .Build())
-            .SetAudioFormat(
-                new Android.Media.AudioFormat.Builder()
-                    .SetEncoding(Android.Media.Encoding.Pcm16bit)
-                    .SetSampleRate(SampleRate)
-                    .SetChannelMask(Android.Media.ChannelOut.Mono)
-                    .Build())
-            .SetBufferSizeInBytes(bufferSize)
-            .SetTransferMode(Android.Media.AudioTrackMode.Stream)
+        if (minBuffer <= 0)
+        {
+            minBuffer = pcm.Length;
+        }
+
+        var attributes = new Android.Media.AudioAttributes.Builder()
+            .SetUsage(Android.Media.AudioUsageKind.Media)
+            .SetContentType(Android.Media.AudioContentType.Music)
             .Build();
+        var format = new Android.Media.AudioFormat.Builder()
+            .SetEncoding(Android.Media.Encoding.Pcm16bit)
+            .SetSampleRate(SampleRate)
+            .SetChannelMask(Android.Media.ChannelOut.Mono)
+            .Build();
+        if (attributes is null || format is null)
+        {
+            return;
+        }
+
+        ReleaseAndroidTrack();
+        _audioTrack = new Android.Media.AudioTrack.Builder()
+            .SetAudioAttributes(attributes)
+            .SetAudioFormat(format)
+            .SetBufferSizeInBytes(Math.Max(minBuffer, pcm.Length))
+            .SetTransferMode(Android.Media.AudioTrackMode.Static)
+            .Build();
+
+        if (_audioTrack is null || _audioTrack.State != Android.Media.AudioTrackState.Initialized)
+        {
+            ReleaseAndroidTrack();
+            return;
+        }
+
+        _audioTrack.SetVolume(Math.Clamp(volume, 0f, 1f));
+        var written = _audioTrack.Write(pcm, 0, pcm.Length, Android.Media.WriteMode.Blocking);
+        if (written <= 0)
+        {
+            ReleaseAndroidTrack();
+            return;
+        }
+
         _audioTrack.Play();
-        _audioTrack.Write(_warmupSound, 0, _warmupSound.Length, Android.Media.WriteMode.Blocking);
+    }
+
+    private void ReleaseAndroidTrack()
+    {
+        if (_audioTrack is null)
+        {
+            return;
+        }
+
+        try
+        {
+            if (_audioTrack.PlayState != Android.Media.PlayState.Stopped)
+            {
+                _audioTrack.Stop();
+            }
+        }
+        catch
+        {
+        }
+
+        _audioTrack.Release();
+        _audioTrack = null;
     }
 #endif
 
