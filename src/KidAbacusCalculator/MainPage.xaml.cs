@@ -6,6 +6,7 @@ namespace KidAbacusCalculator;
 public partial class MainPage : ContentPage
 {
     private readonly MainViewModel _viewModel;
+    private IDispatcherTimer? _answerCheckTimer;
     private IDispatcherTimer? _nextTaskTimer;
 
     public MainPage(MainViewModel viewModel)
@@ -14,6 +15,14 @@ public partial class MainPage : ContentPage
         _viewModel = viewModel;
         BindingContext = viewModel;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        _viewModel.BeadsMoved += OnBeadsMoved;
+    }
+
+    private void OnBeadsMoved(object? sender, EventArgs eventArgs)
+    {
+        // Быстрый перебор бусин не должен сразу засчитывать ответ:
+        // проверка только после паузы после последнего движения.
+        ScheduleAnswerCheck();
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs eventArgs)
@@ -34,6 +43,7 @@ public partial class MainPage : ContentPage
         // Без кнопки «Новый» следующий пример открывается сам после верного ответа.
         if (_viewModel.IsCorrectFeedback)
         {
+            CancelAnswerCheck();
             ScheduleNextTask();
         }
         else
@@ -42,11 +52,42 @@ public partial class MainPage : ContentPage
         }
     }
 
+    private void ScheduleAnswerCheck()
+    {
+        CancelAnswerCheck();
+        _answerCheckTimer = Dispatcher.CreateTimer();
+        _answerCheckTimer.Interval = TimeSpan.FromSeconds(2);
+        _answerCheckTimer.IsRepeating = false;
+        _answerCheckTimer.Tick += OnAnswerCheckTimerTick;
+        _answerCheckTimer.Start();
+    }
+
+    private void OnAnswerCheckTimerTick(object? sender, EventArgs eventArgs)
+    {
+        CancelAnswerCheck();
+        if (_viewModel.IsMatchingAnswer && _viewModel.CheckAnswerCommand.CanExecute(null))
+        {
+            _viewModel.CheckAnswerCommand.Execute(null);
+        }
+    }
+
+    private void CancelAnswerCheck()
+    {
+        if (_answerCheckTimer is null)
+        {
+            return;
+        }
+
+        _answerCheckTimer.Stop();
+        _answerCheckTimer.Tick -= OnAnswerCheckTimerTick;
+        _answerCheckTimer = null;
+    }
+
     private void ScheduleNextTask()
     {
         CancelNextTask();
         _nextTaskTimer = Dispatcher.CreateTimer();
-        _nextTaskTimer.Interval = TimeSpan.FromMilliseconds(1_400);
+        _nextTaskTimer.Interval = TimeSpan.FromMilliseconds(2_800);
         _nextTaskTimer.IsRepeating = false;
         _nextTaskTimer.Tick += OnNextTaskTimerTick;
         _nextTaskTimer.Start();

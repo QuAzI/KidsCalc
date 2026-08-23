@@ -6,7 +6,6 @@ namespace KidAbacusCalculator.Core.ViewModels;
 
 public sealed class MainViewModel : ViewModelBase
 {
-    private const int MaximumAbacusValue = 999;
     private readonly ITaskGenerator _taskGenerator;
     private TaskItem _currentTask = null!;
     private int _currentValue;
@@ -43,6 +42,7 @@ public sealed class MainViewModel : ViewModelBase
             if (SetProperty(ref _currentTask, value))
             {
                 OnPropertyChanged(nameof(ProblemText));
+                OnPropertyChanged(nameof(IsMatchingAnswer));
             }
         }
     }
@@ -55,6 +55,7 @@ public sealed class MainViewModel : ViewModelBase
             if (SetProperty(ref _currentValue, value))
             {
                 OnPropertyChanged(nameof(AbacusDescription));
+                OnPropertyChanged(nameof(IsMatchingAnswer));
                 NotifyCommandStates();
             }
         }
@@ -91,6 +92,8 @@ public sealed class MainViewModel : ViewModelBase
 
     public string AbacusDescription => $"На счётах число {CurrentValue}";
 
+    public bool IsMatchingAnswer => CurrentValue == CurrentTask.Answer;
+
     public bool IsFeedbackVisible => FeedbackState != FeedbackState.None;
 
     public bool IsCorrectFeedback => FeedbackState == FeedbackState.Correct;
@@ -105,6 +108,8 @@ public sealed class MainViewModel : ViewModelBase
 
     public ICommand NewTaskCommand { get; }
 
+    public event EventHandler? BeadsMoved;
+
     private void ChangePlace(object? parameter, int direction)
     {
         var placeValue = ParsePlace(parameter);
@@ -116,16 +121,11 @@ public sealed class MainViewModel : ViewModelBase
         FeedbackState = FeedbackState.None;
         FeedbackText = string.Empty;
         CurrentValue += placeValue * direction;
-
-        // Кнопок проверки больше нет: ответ засчитывается, как только
-        // собранное на спицах число совпало с примером.
-        if (CurrentValue == CurrentTask.Answer)
-        {
-            CheckAnswer();
-        }
+        BeadsMoved?.Invoke(this, EventArgs.Empty);
     }
 
-    // Разряд можно менять только в пределах одной цифры 0–9 и общего максимума счётов.
+    // Перенос и заём идут через всё число: 9+1 в единицах даёт 10,
+    // а вычесть единицу из 10 можно за счёт старшего разряда.
     private bool CanChangePlace(int placeValue, int direction)
     {
         if (FeedbackState == FeedbackState.Correct)
@@ -133,18 +133,17 @@ public sealed class MainViewModel : ViewModelBase
             return false;
         }
 
-        if (placeValue is not (1 or 10 or 100) || direction is not (1 or -1))
+        if (placeValue is not (1 or 10 or 100 or 1_000) || direction is not (1 or -1))
         {
             return false;
         }
 
-        var digit = CurrentValue / placeValue % 10;
         if (direction > 0)
         {
-            return digit < 9 && CurrentValue + placeValue <= MaximumAbacusValue;
+            return CurrentValue + placeValue <= AbacusBuilder.MaximumValue;
         }
 
-        return digit > 0;
+        return CurrentValue >= placeValue;
     }
 
     private static int ParsePlace(object? parameter)

@@ -8,6 +8,7 @@ public sealed class AbacusDrawable : IDrawable
     private const int BeadsPerRod = 9;
     private static readonly Color[] ActiveColors =
     [
+        Color.FromArgb("#2563EB"),
         Color.FromArgb("#7C3AED"),
         Color.FromArgb("#F97316"),
         Color.FromArgb("#0F9D78")
@@ -25,8 +26,8 @@ public sealed class AbacusDrawable : IDrawable
 
     public void SetTransition(int previousValue, int targetValue, double progress)
     {
-        _previousValue = Math.Clamp(previousValue, 0, 999);
-        _targetValue = Math.Clamp(targetValue, 0, 999);
+        _previousValue = Math.Clamp(previousValue, 0, AbacusBuilder.MaximumValue);
+        _targetValue = Math.Clamp(targetValue, 0, AbacusBuilder.MaximumValue);
         _progress = (float)Math.Clamp(progress, 0d, 1d);
     }
 
@@ -44,17 +45,18 @@ public sealed class AbacusDrawable : IDrawable
         var targetDigits = _abacusBuilder.BuildDigits(_targetValue);
         var rodTop = 16f;
         var rodBottom = Math.Max(rodTop + 100f, dirtyRect.Height - 54f);
-        var beadRadius = Math.Clamp(dirtyRect.Width / 18f, 9f, 18f);
+        var beadRadius = Math.Clamp(dirtyRect.Width / 24f, 8f, 16f);
         var beadDiameter = beadRadius * 2f;
         var step = Math.Min(
             beadDiameter * 0.78f,
             (rodBottom - rodTop) / (BeadsPerRod + 1));
+        var rodCount = targetDigits.Count;
 
         // Каждый разряд рисуется одинаково, но позиции бусин интерполируются
         // между старой и новой цифрой — это сохраняет смысл движения при анимации.
-        for (var rodIndex = 0; rodIndex < targetDigits.Count; rodIndex++)
+        for (var rodIndex = 0; rodIndex < rodCount; rodIndex++)
         {
-            var centerX = dirtyRect.Width * (rodIndex + 0.5f) / 3f;
+            var centerX = dirtyRect.Width * (rodIndex + 0.5f) / rodCount;
             var previousDigit = previousDigits[rodIndex].Value;
             var targetDigit = targetDigits[rodIndex].Value;
 
@@ -117,15 +119,15 @@ public sealed class AbacusDrawable : IDrawable
         }
 
         canvas.FillColor = activeColor;
-        canvas.FillRoundedRectangle(centerX - 24f, rodBottom + 16f, 48f, 34f, 12f);
+        canvas.FillRoundedRectangle(centerX - 20f, rodBottom + 16f, 40f, 32f, 10f);
         canvas.FontColor = Colors.White;
-        canvas.FontSize = 20f;
+        canvas.FontSize = 18f;
         canvas.DrawString(
             targetDigit.ToString(),
-            centerX - 24f,
+            centerX - 20f,
             rodBottom + 16f,
-            48f,
-            34f,
+            40f,
+            32f,
             HorizontalAlignment.Center,
             VerticalAlignment.Center);
     }

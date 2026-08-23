@@ -74,22 +74,29 @@
             StrokeShape="RoundRectangle 24"
             StrokeThickness="2">
             <Grid RowDefinitions="Auto,*,Auto" RowSpacing="6">
-                <Grid ColumnDefinitions="*,*,*">
+                <Grid ColumnDefinitions="*,*,*,*">
                     <Button
+                        Command="{Binding IncrementPlaceCommand}"
+                        CommandParameter="1000"
+                        SemanticProperties.Hint="Добавить тысячу"
+                        Style="{StaticResource RodButton}"
+                        Text="+" />
+                    <Button
+                        Grid.Column="1"
                         Command="{Binding IncrementPlaceCommand}"
                         CommandParameter="100"
                         SemanticProperties.Hint="Добавить сотню"
                         Style="{StaticResource RodButton}"
                         Text="+" />
                     <Button
-                        Grid.Column="1"
+                        Grid.Column="2"
                         Command="{Binding IncrementPlaceCommand}"
                         CommandParameter="10"
                         SemanticProperties.Hint="Добавить десяток"
                         Style="{StaticResource RodButton}"
                         Text="+" />
                     <Button
-                        Grid.Column="2"
+                        Grid.Column="3"
                         Command="{Binding IncrementPlaceCommand}"
                         CommandParameter="1"
                         SemanticProperties.Hint="Добавить единицу"
@@ -102,22 +109,29 @@
                     SemanticProperties.Description="{Binding AbacusDescription}"
                     Value="{Binding CurrentValue}" />
 
-                <Grid Grid.Row="2" ColumnDefinitions="*,*,*">
+                <Grid Grid.Row="2" ColumnDefinitions="*,*,*,*">
                     <Button
+                        Command="{Binding DecrementPlaceCommand}"
+                        CommandParameter="1000"
+                        SemanticProperties.Hint="Убрать тысячу"
+                        Style="{StaticResource RodButton}"
+                        Text="−" />
+                    <Button
+                        Grid.Column="1"
                         Command="{Binding DecrementPlaceCommand}"
                         CommandParameter="100"
                         SemanticProperties.Hint="Убрать сотню"
                         Style="{StaticResource RodButton}"
                         Text="−" />
                     <Button
-                        Grid.Column="1"
+                        Grid.Column="2"
                         Command="{Binding DecrementPlaceCommand}"
                         CommandParameter="10"
                         SemanticProperties.Hint="Убрать десяток"
                         Style="{StaticResource RodButton}"
                         Text="−" />
                     <Button
-                        Grid.Column="2"
+                        Grid.Column="3"
                         Command="{Binding DecrementPlaceCommand}"
                         CommandParameter="1"
                         SemanticProperties.Hint="Убрать единицу"

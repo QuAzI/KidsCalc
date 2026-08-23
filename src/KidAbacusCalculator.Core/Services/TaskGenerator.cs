@@ -19,6 +19,7 @@ public sealed class TaskGenerator : ITaskGenerator
     public TaskItem Create(int maximumAnswer)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(maximumAnswer, 1);
+        // Тысячный ряд на счётах есть, но примеры его не используют.
         ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumAnswer, 999);
 
         var operation = _random.Next(2) == 0

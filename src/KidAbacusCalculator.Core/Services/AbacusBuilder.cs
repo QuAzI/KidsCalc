@@ -4,19 +4,21 @@ namespace KidAbacusCalculator.Core.Services;
 
 public sealed class AbacusBuilder
 {
-    public IReadOnlyList<AbacusDigit> BuildDigits(int value, int numberOfPlaces = 3)
+    public const int PlaceCount = 4;
+    public const int MaximumValue = 9_999;
+
+    public IReadOnlyList<AbacusDigit> BuildDigits(int value, int numberOfPlaces = PlaceCount)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(value);
         ArgumentOutOfRangeException.ThrowIfLessThan(numberOfPlaces, 1);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(numberOfPlaces, 3);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(numberOfPlaces, PlaceCount);
 
         var maximumValue = Pow10(numberOfPlaces) - 1;
         ArgumentOutOfRangeException.ThrowIfGreaterThan(value, maximumValue);
 
         var digits = new List<AbacusDigit>(numberOfPlaces);
 
-        // Разряды строятся слева направо, чтобы результат можно было
-        // напрямую использовать при отрисовке сотен, десятков и единиц.
+        // Разряды строятся слева направо: тысячи, сотни, десятки, единицы.
         for (var index = numberOfPlaces - 1; index >= 0; index--)
         {
             var placeValue = Pow10(index);

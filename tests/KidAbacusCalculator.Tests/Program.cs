@@ -13,7 +13,8 @@ internal static class Program
         ("AbacusBuilder раскладывает число", AbacusBuilderSplitsDigits),
         ("MainViewModel проверяет и исправляет ответ", MainViewModelChecksAnswer),
         ("MainViewModel повышает уровень", MainViewModelRaisesDifficulty),
-        ("MainViewModel меняет разряды колонками", MainViewModelChangesPlaces)
+        ("MainViewModel меняет разряды колонками", MainViewModelChangesPlaces),
+        ("MainViewModel переносит и занимает разряды", MainViewModelCarriesAndBorrows)
     ];
 
     public static int Main()
@@ -84,11 +85,15 @@ internal static class Program
         var builder = new AbacusBuilder();
         var digits = builder.BuildDigits(407);
 
-        Equal(3, digits.Count);
-        Equal(new AbacusDigit(100, 4), digits[0]);
-        Equal(new AbacusDigit(10, 0), digits[1]);
-        Equal(new AbacusDigit(1, 7), digits[2]);
-        Throws<ArgumentOutOfRangeException>(() => builder.BuildDigits(1_000));
+        Equal(4, digits.Count);
+        Equal(new AbacusDigit(1_000, 0), digits[0]);
+        Equal(new AbacusDigit(100, 4), digits[1]);
+        Equal(new AbacusDigit(10, 0), digits[2]);
+        Equal(new AbacusDigit(1, 7), digits[3]);
+
+        var withThousands = builder.BuildDigits(1_407);
+        Equal(new AbacusDigit(1_000, 1), withThousands[0]);
+        Throws<ArgumentOutOfRangeException>(() => builder.BuildDigits(10_000));
     }
 
     private static void MainViewModelChecksAnswer()
@@ -104,6 +109,12 @@ internal static class Program
         viewModel.IncrementPlaceCommand.Execute("1");
         viewModel.IncrementPlaceCommand.Execute("1");
 
+        True(viewModel.IsMatchingAnswer, "Число на счётах не совпало с ответом.");
+        False(
+            viewModel.IsCorrectFeedback,
+            "Ответ засчитан сразу после перебора бусин.");
+
+        viewModel.CheckAnswerCommand.Execute(null);
         True(viewModel.IsCorrectFeedback, "Правильный ответ не распознан.");
         False(
             viewModel.IncrementPlaceCommand.CanExecute("1"),
@@ -143,7 +154,7 @@ internal static class Program
         Equal(3, viewModel.CurrentValue);
         False(
             viewModel.DecrementPlaceCommand.CanExecute("100"),
-            "Сотни уменьшаются при нулевой цифре.");
+            "Сотни уменьшаются, когда числа меньше 100.");
 
         viewModel.IncrementPlaceCommand.Execute("100");
         Equal(103, viewModel.CurrentValue);
@@ -156,7 +167,47 @@ internal static class Program
         viewModel.IncrementPlaceCommand.Execute("1");
         viewModel.IncrementPlaceCommand.Execute("1");
         Equal(5, viewModel.CurrentValue);
-        True(viewModel.IsCorrectFeedback, "Совпадение с ответом не засчитано автоматически.");
+        False(
+            viewModel.IsCorrectFeedback,
+            "Совпадение засчитано сразу после последней бусины.");
+        viewModel.CheckAnswerCommand.Execute(null);
+        True(viewModel.IsCorrectFeedback, "Совпадение с ответом не засчитано.");
+    }
+
+    private static void MainViewModelCarriesAndBorrows()
+    {
+        var generator = new FakeTaskGenerator(
+            new TaskItem(9, 80, MathOperation.Addition));
+        var viewModel = new MainViewModel(generator);
+
+        Equal(9, viewModel.CurrentValue);
+        True(
+            viewModel.IncrementPlaceCommand.CanExecute("1"),
+            "Девять единиц нельзя перенести в десятки.");
+        viewModel.IncrementPlaceCommand.Execute("1");
+        Equal(10, viewModel.CurrentValue);
+
+        True(
+            viewModel.DecrementPlaceCommand.CanExecute("1"),
+            "Единицу нельзя занять из десятков.");
+        viewModel.DecrementPlaceCommand.Execute("1");
+        Equal(9, viewModel.CurrentValue);
+
+        viewModel.IncrementPlaceCommand.Execute("1");
+        viewModel.IncrementPlaceCommand.Execute("1000");
+        Equal(1_010, viewModel.CurrentValue);
+
+        True(
+            viewModel.DecrementPlaceCommand.CanExecute("100"),
+            "Сотни нельзя занять из тысяч.");
+        viewModel.DecrementPlaceCommand.Execute("10");
+        Equal(1_000, viewModel.CurrentValue);
+        viewModel.DecrementPlaceCommand.Execute("1");
+        Equal(999, viewModel.CurrentValue);
+
+        False(
+            viewModel.IncrementPlaceCommand.CanExecute("10000"),
+            "Разряд вне счётов принимается.");
     }
 
     private static void Equal<T>(T expected, T actual)
