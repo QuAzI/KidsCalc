@@ -43,7 +43,7 @@
         ColumnDefinitions="*"
         HorizontalOptions="Center"
         MaximumWidthRequest="540"
-        RowDefinitions="Auto,*,Auto"
+        RowDefinitions="Auto,*"
         RowSpacing="12">
 
         <Border
@@ -52,17 +52,45 @@
             Stroke="{AppThemeBinding Light=#DDD6FE, Dark=#7C3AED}"
             StrokeShape="RoundRectangle 24"
             StrokeThickness="2">
+            <Border.Triggers>
+                <DataTrigger
+                    Binding="{Binding IsCorrectFeedback}"
+                    TargetType="Border"
+                    Value="True">
+                    <Setter Property="BackgroundColor" Value="#ECFDF5" />
+                    <Setter Property="Stroke" Value="#22C55E" />
+                </DataTrigger>
+            </Border.Triggers>
             <VerticalStackLayout Spacing="0">
                 <Label
                     FontSize="14"
-                    Text="РЕШИ ПРИМЕР"
-                    TextColor="{AppThemeBinding Light=#64748B, Dark=#CBD5E1}" />
+                    Text="{Binding PromptText}"
+                    TextColor="{AppThemeBinding Light=#64748B, Dark=#CBD5E1}">
+                    <Label.Triggers>
+                        <DataTrigger
+                            Binding="{Binding IsCorrectFeedback}"
+                            TargetType="Label"
+                            Value="True">
+                            <Setter Property="FontAttributes" Value="Bold" />
+                            <Setter Property="TextColor" Value="#16A34A" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
                 <Label
                     FontAttributes="Bold"
                     FontSize="44"
                     SemanticProperties.HeadingLevel="Level1"
                     Text="{Binding ProblemText}"
-                    TextColor="{AppThemeBinding Light=#172554, Dark=#FFFFFF}" />
+                    TextColor="{AppThemeBinding Light=#172554, Dark=#FFFFFF}">
+                    <Label.Triggers>
+                        <DataTrigger
+                            Binding="{Binding IsCorrectFeedback}"
+                            TargetType="Label"
+                            Value="True">
+                            <Setter Property="TextColor" Value="#16A34A" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
             </VerticalStackLayout>
         </Border>
 
@@ -140,38 +168,5 @@
                 </Grid>
             </Grid>
         </Border>
-
-        <Grid Grid.Row="2">
-            <!-- Результат объявляется screen reader из code-behind после смены состояния. -->
-            <Border
-                Padding="16,12"
-                BackgroundColor="{AppThemeBinding Light=#DCFCE7, Dark=#14532D}"
-                IsVisible="{Binding IsCorrectFeedback}"
-                Stroke="#22C55E"
-                StrokeShape="RoundRectangle 18"
-                StrokeThickness="2">
-                <Label
-                    FontAttributes="Bold"
-                    FontSize="18"
-                    HorizontalTextAlignment="Center"
-                    Text="{Binding FeedbackText}"
-                    TextColor="{AppThemeBinding Light=#166534, Dark=#F0FDF4}" />
-            </Border>
-
-            <Border
-                Padding="16,12"
-                BackgroundColor="{AppThemeBinding Light=#FFF7ED, Dark=#7C2D12}"
-                IsVisible="{Binding IsIncorrectFeedback}"
-                Stroke="#F97316"
-                StrokeShape="RoundRectangle 18"
-                StrokeThickness="2">
-                <Label
-                    FontAttributes="Bold"
-                    FontSize="18"
-                    HorizontalTextAlignment="Center"
-                    Text="{Binding FeedbackText}"
-                    TextColor="{AppThemeBinding Light=#9A3412, Dark=#FFF7ED}" />
-            </Border>
-        </Grid>
     </Grid>
 </ContentPage>

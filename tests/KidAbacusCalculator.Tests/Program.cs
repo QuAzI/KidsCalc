@@ -49,8 +49,10 @@ internal static class Program
 
         Equal(7, addition.Answer);
         Equal("3 + 4 = ?", addition.DisplayText);
+        Equal("3 + 4 = 7", addition.SolvedDisplayText);
         Equal(5, subtraction.Answer);
         Equal("7 − 2 = ?", subtraction.DisplayText);
+        Equal("7 − 2 = 5", subtraction.SolvedDisplayText);
     }
 
     private static void TaskGeneratorKeepsAnswersInRange()
@@ -116,6 +118,8 @@ internal static class Program
 
         viewModel.CheckAnswerCommand.Execute(null);
         True(viewModel.IsCorrectFeedback, "Правильный ответ не распознан.");
+        Equal("Верно!", viewModel.PromptText);
+        Equal("3 + 2 = 5", viewModel.ProblemText);
         False(
             viewModel.IncrementPlaceCommand.CanExecute("1"),
             "После правильного ответа значение всё ещё можно менять.");

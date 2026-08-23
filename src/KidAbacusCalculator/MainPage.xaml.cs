@@ -34,15 +34,11 @@ public partial class MainPage : ContentPage
 
         // SemanticProperties не предоставляет live-region в MAUI XAML,
         // поэтому динамический результат явно передаётся экранному диктору.
-        if (_viewModel.IsFeedbackVisible)
-        {
-            Dispatcher.Dispatch(
-                () => SemanticScreenReader.Announce(_viewModel.FeedbackText));
-        }
-
-        // Без кнопки «Новый» следующий пример открывается сам после верного ответа.
         if (_viewModel.IsCorrectFeedback)
         {
+            Dispatcher.Dispatch(
+                () => SemanticScreenReader.Announce(
+                    $"{_viewModel.PromptText}. {_viewModel.ProblemText}"));
             CancelAnswerCheck();
             ScheduleNextTask();
         }

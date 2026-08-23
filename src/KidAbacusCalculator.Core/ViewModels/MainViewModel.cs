@@ -77,6 +77,8 @@ public sealed class MainViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsFeedbackVisible));
                 OnPropertyChanged(nameof(IsCorrectFeedback));
                 OnPropertyChanged(nameof(IsIncorrectFeedback));
+                OnPropertyChanged(nameof(ProblemText));
+                OnPropertyChanged(nameof(PromptText));
                 NotifyCommandStates();
             }
         }
@@ -88,7 +90,11 @@ public sealed class MainViewModel : ViewModelBase
         private set => SetProperty(ref _feedbackText, value);
     }
 
-    public string ProblemText => CurrentTask.DisplayText;
+    public string ProblemText => IsCorrectFeedback
+        ? CurrentTask.SolvedDisplayText
+        : CurrentTask.DisplayText;
+
+    public string PromptText => IsCorrectFeedback ? "Верно!" : "Реши пример";
 
     public string AbacusDescription => $"На счётах число {CurrentValue}";
 

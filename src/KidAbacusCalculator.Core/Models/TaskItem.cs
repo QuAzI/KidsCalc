@@ -11,5 +11,10 @@ public sealed record TaskItem(
 
     public string OperationSymbol => Operation == MathOperation.Addition ? "+" : "−";
 
-    public string DisplayText => $"{LeftOperand} {OperationSymbol} {RightOperand} = ?";
+    public string DisplayText => FormatDisplay("?");
+
+    public string SolvedDisplayText => FormatDisplay(Answer.ToString());
+
+    private string FormatDisplay(string result) =>
+        $"{LeftOperand} {OperationSymbol} {RightOperand} = {result}";
 }
