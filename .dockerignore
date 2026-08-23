@@ -1,0 +1,13 @@
+**/.git
+**/.vs
+**/.vscode
+**/.cursor
+**/bin
+**/obj
+**/out
+**/*.user
+**/*.suo
+**/.DS_Store
+docs/
+*.md
+!nuget.config

@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/KidAbacusCalculator.Core/KidAbacusCalculator.Core.csproj" />
+    <Project Path="src/KidAbacusCalculator/KidAbacusCalculator.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/KidAbacusCalculator.Tests/KidAbacusCalculator.Tests.csproj" />
+  </Folder>
+</Solution>

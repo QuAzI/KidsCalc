@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="456" height="456" viewBox="0 0 456 456" xmlns="http://www.w3.org/2000/svg">
+    <rect x="102" y="92" width="252" height="272" rx="34" fill="#FFFFFF"/>
+    <rect x="126" y="116" width="204" height="224" rx="20" fill="#F5F3FF"/>
+    <line x1="168" y1="142" x2="168" y2="316" stroke="#475569" stroke-width="10" stroke-linecap="round"/>
+    <line x1="228" y1="142" x2="228" y2="316" stroke="#475569" stroke-width="10" stroke-linecap="round"/>
+    <line x1="288" y1="142" x2="288" y2="316" stroke="#475569" stroke-width="10" stroke-linecap="round"/>
+    <g fill="#F97316" stroke="#1E293B" stroke-width="4">
+        <ellipse cx="168" cy="174" rx="24" ry="15"/>
+        <ellipse cx="168" cy="208" rx="24" ry="15"/>
+        <ellipse cx="228" cy="174" rx="24" ry="15"/>
+        <ellipse cx="228" cy="208" rx="24" ry="15"/>
+        <ellipse cx="228" cy="242" rx="24" ry="15"/>
+        <ellipse cx="288" cy="174" rx="24" ry="15"/>
+        <ellipse cx="288" cy="208" rx="24" ry="15"/>
+        <ellipse cx="288" cy="242" rx="24" ry="15"/>
+        <ellipse cx="288" cy="276" rx="24" ry="15"/>
+    </g>
+</svg>

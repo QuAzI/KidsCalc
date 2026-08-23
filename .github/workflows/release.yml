@@ -1,0 +1,137 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "true"
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Install MAUI Windows workload
+        run: dotnet workload install maui-windows --skip-manifest-update
+
+      - name: Publish Windows win-x64
+        run: >
+          dotnet publish src/KidAbacusCalculator/KidAbacusCalculator.csproj
+          -f net10.0-windows10.0.19041.0
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:WindowsPackageType=None
+          -o artifacts/windows-win-x64
+
+      - name: Upload Windows win-x64
+        uses: actions/upload-artifact@v4
+        with:
+          name: kidabacus-windows-win-x64
+          path: artifacts/windows-win-x64/
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install MAUI Android workload
+        run: dotnet workload install maui-android --skip-manifest-update
+
+      - name: Create CI signing keystore
+        # Ephemeral debug/auto keystore — not a production Play Store key.
+        run: >
+          keytool -genkeypair -v
+          -keystore "${{ github.workspace }}/kidabacus-ci.keystore"
+          -alias kidabacus
+          -keyalg RSA -keysize 2048 -validity 10000
+          -storepass android -keypass android
+          -dname "CN=KidAbacusCalculator CI, OU=CI, O=KidAbacusCalculator, L=Local, S=Local, C=US"
+
+      - name: Publish Android APK
+        run: >
+          dotnet publish src/KidAbacusCalculator/KidAbacusCalculator.csproj
+          -f net10.0-android
+          -c Release
+          -p:AndroidPackageFormat=apk
+          -p:AndroidKeyStore=true
+          -p:AndroidSigningKeyStore=${{ github.workspace }}/kidabacus-ci.keystore
+          -p:AndroidSigningKeyAlias=kidabacus
+          -p:AndroidSigningKeyPass=android
+          -p:AndroidSigningStorePass=android
+          -o artifacts/android
+
+      - name: Collect APK
+        run: |
+          mkdir -p release-apk
+          mapfile -t apks < <(find artifacts/android src/KidAbacusCalculator/bin -type f -name '*Signed.apk' 2>/dev/null | head -n 5)
+          if [ ${#apks[@]} -eq 0 ]; then
+            mapfile -t apks < <(find artifacts/android src/KidAbacusCalculator/bin -type f -name '*.apk' 2>/dev/null | head -n 5)
+          fi
+          if [ ${#apks[@]} -eq 0 ]; then
+            echo "No APK found after publish" >&2
+            find artifacts/android src/KidAbacusCalculator/bin -type f 2>/dev/null | head -n 50 || true
+            exit 1
+          fi
+          cp "${apks[0]}" "release-apk/KidAbacusCalculator-android-ci-signed.apk"
+          echo "Packed ${apks[0]}"
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kidabacus-android-apk
+          path: release-apk/KidAbacusCalculator-android-ci-signed.apk
+
+  github-release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Pack archives
+        run: |
+          set -euo pipefail
+          cd dist
+          zip -r "../KidAbacusCalculator-windows-win-x64.zip" kidabacus-windows-win-x64
+          cp kidabacus-android-apk/KidAbacusCalculator-android-ci-signed.apk ../KidAbacusCalculator-android-ci-signed.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            KidAbacusCalculator-windows-win-x64.zip
+            KidAbacusCalculator-android-ci-signed.apk
+          generate_release_notes: true
+          body: |
+            ## Artifacts
+            - **Windows** (`win-x64`, self-contained, unpackaged MAUI)
+            - **Android APK** — signed with an ephemeral CI keystore (sideload/testing only, not Play Store)

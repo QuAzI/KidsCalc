@@ -1,0 +1,67 @@
+﻿# An .aiignore file follows the same syntax as a .gitignore file.
+# .gitignore documentation: https://git-scm.com/docs/gitignore
+
+# Environment and secrets
+.env
+.env.*
+.npmrc
+
+# Version control
+.git/
+.gitignore
+
+# IDE settings (user-specific)
+.idea/
+.vscode/
+.vs/
+*.suo
+*.user
+*.DotSettings.user
+
+# Build outputs
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+*.pdb
+*.dll
+*.exe
+*.cache
+
+# Node.js
+node_modules/
+
+*.tgz
+*.zip
+*.7z
+*.rar
+
+# Logs and temporary files
+*.log
+*.tmp
+[Ll]og/
+
+# Test results and coverage
+[Tt]est[Rr]esult*/
+TestResult.xml
+*.coverage
+*.coveragexml
+coveragereport/
+*.dotCover
+
+# Backup files
+* - Backup.*
+*.bak
+
+# NuGet packages
+*.nupkg
+packages/
+**/[Pp]ackages/*
+
+# Other generated/temporary files
+*.swp
+*.swo
+*~
+~$*
