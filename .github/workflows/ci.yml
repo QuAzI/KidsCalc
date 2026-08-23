@@ -56,13 +56,18 @@ jobs:
         run: dotnet workload install maui-windows --skip-manifest-update
 
       - name: Restore Windows
+        # restore has no --framework (-f is --force → MSB1008). Override TargetFrameworks
+        # to the Windows TFM (csproj also lists android). -r win-x64 downloads the
+        # runtime pack that unpackaged MAUI Windows needs (NETSDK1112 without it).
         run: >
           dotnet restore src/KidAbacusCalculator/KidAbacusCalculator.csproj
-          -f net10.0-windows10.0.19041.0
+          -p:TargetFrameworks=net10.0-windows10.0.19041.0
+          -r win-x64
 
       - name: Build Windows (Release)
         run: >
           dotnet build src/KidAbacusCalculator/KidAbacusCalculator.csproj
           -c Release
           -f net10.0-windows10.0.19041.0
+          -r win-x64
           --no-restore
