@@ -13,6 +13,14 @@ public sealed class AbacusView : GraphicsView
         BindingMode.OneWay,
         propertyChanged: OnValueChanged);
 
+    public static readonly BindableProperty MaximumTaskPlaceValueProperty = BindableProperty.Create(
+        nameof(MaximumTaskPlaceValue),
+        typeof(int),
+        typeof(AbacusView),
+        1,
+        BindingMode.OneWay,
+        propertyChanged: OnMaximumTaskPlaceValueChanged);
+
     private readonly AbacusDrawable _abacusDrawable;
 
     public AbacusView()
@@ -25,6 +33,12 @@ public sealed class AbacusView : GraphicsView
     {
         get => (int)GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
+    }
+
+    public int MaximumTaskPlaceValue
+    {
+        get => (int)GetValue(MaximumTaskPlaceValueProperty);
+        set => SetValue(MaximumTaskPlaceValueProperty, value);
     }
 
     private static void OnValueChanged(
@@ -65,5 +79,18 @@ public sealed class AbacusView : GraphicsView
                 view._abacusDrawable.SetTransition(target, target, 1d);
                 view.Invalidate();
             });
+    }
+
+    private static void OnMaximumTaskPlaceValueChanged(
+        BindableObject bindable,
+        object oldValue,
+        object newValue)
+    {
+        var view = (AbacusView)bindable;
+
+        // Серый разряд остаётся частью тех же счётов: меняется только палитра,
+        // а обработка кнопок и анимация значения продолжают работать как раньше.
+        view._abacusDrawable.SetMaximumTaskPlaceValue((int)newValue);
+        view.Invalidate();
     }
 }

@@ -47,6 +47,12 @@ public sealed class MainViewModel : ViewModelBase
                 OnPropertyChanged(nameof(ProblemText));
                 OnPropertyChanged(nameof(ProblemPrefix));
                 OnPropertyChanged(nameof(IsMatchingAnswer));
+                // Нужный диапазон счётов определяется всем примером, включая ответ:
+                // например, для 9 + 8 колонка десятков должна оставаться цветной.
+                OnPropertyChanged(nameof(MaximumTaskPlaceValue));
+                OnPropertyChanged(nameof(IsThousandsColumnRelevant));
+                OnPropertyChanged(nameof(IsHundredsColumnRelevant));
+                OnPropertyChanged(nameof(IsTensColumnRelevant));
             }
         }
     }
@@ -142,6 +148,32 @@ public sealed class MainViewModel : ViewModelBase
     public int TensDigit => (CurrentValue / 10) % 10;
 
     public int OnesDigit => CurrentValue % 10;
+
+    // Возвращается старший разряд наибольшего числа во всём примере.
+    // Разряды с большим номиналом можно визуально приглушить как ненужные.
+    public int MaximumTaskPlaceValue
+    {
+        get
+        {
+            var maximumTaskValue = Math.Max(
+                Math.Max(CurrentTask.LeftOperand, CurrentTask.RightOperand),
+                CurrentTask.Answer);
+
+            return maximumTaskValue switch
+            {
+                >= 1_000 => 1_000,
+                >= 100 => 100,
+                >= 10 => 10,
+                _ => 1
+            };
+        }
+    }
+
+    public bool IsThousandsColumnRelevant => MaximumTaskPlaceValue >= 1_000;
+
+    public bool IsHundredsColumnRelevant => MaximumTaskPlaceValue >= 100;
+
+    public bool IsTensColumnRelevant => MaximumTaskPlaceValue >= 10;
 
     public bool IsMatchingAnswer => CurrentValue == CurrentTask.Answer;
 

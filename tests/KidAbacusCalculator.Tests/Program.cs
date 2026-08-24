@@ -16,6 +16,7 @@ internal static class Program
         ("MainViewModel повышает уровень", MainViewModelRaisesDifficulty),
         ("MainViewModel меняет разряды колонками", MainViewModelChangesPlaces),
         ("MainViewModel переносит и занимает разряды", MainViewModelCarriesAndBorrows),
+        ("MainViewModel отмечает нужные разряды примера", MainViewModelMarksRelevantPlaces),
         ("MainViewModel принимает числовой ввод", MainViewModelAcceptsNumericInput),
         ("MainViewModel включает звуки бусин и верного ответа", MainViewModelPlaysSounds)
     ];
@@ -245,6 +246,32 @@ internal static class Program
         False(
             viewModel.IncrementPlaceCommand.CanExecute("10000"),
             "Разряд вне счётов принимается.");
+    }
+
+    private static void MainViewModelMarksRelevantPlaces()
+    {
+        // Учитывается и ответ: перенос из 9 + 8 делает десятки нужными,
+        // хотя оба показанных операнда состоят только из единиц.
+        var ones = new MainViewModel(
+            new FakeTaskGenerator(new TaskItem(3, 2, MathOperation.Addition)));
+        var carryToTens = new MainViewModel(
+            new FakeTaskGenerator(new TaskItem(9, 8, MathOperation.Addition)));
+        var hundreds = new MainViewModel(
+            new FakeTaskGenerator(new TaskItem(407, 7, MathOperation.Subtraction)));
+        var thousands = new MainViewModel(
+            new FakeTaskGenerator(new TaskItem(999, 2, MathOperation.Addition)));
+
+        Equal(1, ones.MaximumTaskPlaceValue);
+        False(ones.IsTensColumnRelevant, "Десятки цветные для однозначного примера.");
+        False(ones.IsHundredsColumnRelevant, "Сотни цветные для однозначного примера.");
+        False(ones.IsThousandsColumnRelevant, "Тысячи цветные для однозначного примера.");
+
+        Equal(10, carryToTens.MaximumTaskPlaceValue);
+        True(carryToTens.IsTensColumnRelevant, "Разряд ответа не учтён.");
+        Equal(100, hundreds.MaximumTaskPlaceValue);
+        True(hundreds.IsHundredsColumnRelevant, "Разряд сотен не учтён.");
+        Equal(1_000, thousands.MaximumTaskPlaceValue);
+        True(thousands.IsThousandsColumnRelevant, "Разряд тысяч не учтён.");
     }
 
     private static void MainViewModelPlaysSounds()

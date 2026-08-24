@@ -51,6 +51,97 @@
             <Setter Property="TextColor" Value="White" />
             <Setter Property="VerticalTextAlignment" Value="Center" />
         </Style>
+
+        <!-- Эти стили только приглушают ненужные разряды; IsEnabled и команды
+             намеренно не меняются, чтобы все колонки оставались функциональными. -->
+        <Style
+            x:Key="ThousandsRodButton"
+            BasedOn="{StaticResource RodButton}"
+            TargetType="Button">
+            <Style.Triggers>
+                <DataTrigger
+                    Binding="{Binding IsThousandsColumnRelevant}"
+                    TargetType="Button"
+                    Value="False">
+                    <Setter Property="BackgroundColor" Value="#E2E8F0" />
+                    <Setter Property="BorderColor" Value="#94A3B8" />
+                    <Setter Property="TextColor" Value="#64748B" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style
+            x:Key="HundredsRodButton"
+            BasedOn="{StaticResource RodButton}"
+            TargetType="Button">
+            <Style.Triggers>
+                <DataTrigger
+                    Binding="{Binding IsHundredsColumnRelevant}"
+                    TargetType="Button"
+                    Value="False">
+                    <Setter Property="BackgroundColor" Value="#E2E8F0" />
+                    <Setter Property="BorderColor" Value="#94A3B8" />
+                    <Setter Property="TextColor" Value="#64748B" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style
+            x:Key="TensRodButton"
+            BasedOn="{StaticResource RodButton}"
+            TargetType="Button">
+            <Style.Triggers>
+                <DataTrigger
+                    Binding="{Binding IsTensColumnRelevant}"
+                    TargetType="Button"
+                    Value="False">
+                    <Setter Property="BackgroundColor" Value="#E2E8F0" />
+                    <Setter Property="BorderColor" Value="#94A3B8" />
+                    <Setter Property="TextColor" Value="#64748B" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style
+            x:Key="ThousandsCounterBadge"
+            BasedOn="{StaticResource CounterBadge}"
+            TargetType="Border">
+            <Setter Property="BackgroundColor" Value="#2563EB" />
+            <Style.Triggers>
+                <DataTrigger
+                    Binding="{Binding IsThousandsColumnRelevant}"
+                    TargetType="Border"
+                    Value="False">
+                    <Setter Property="BackgroundColor" Value="#94A3B8" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style
+            x:Key="HundredsCounterBadge"
+            BasedOn="{StaticResource CounterBadge}"
+            TargetType="Border">
+            <Setter Property="BackgroundColor" Value="#7C3AED" />
+            <Style.Triggers>
+                <DataTrigger
+                    Binding="{Binding IsHundredsColumnRelevant}"
+                    TargetType="Border"
+                    Value="False">
+                    <Setter Property="BackgroundColor" Value="#94A3B8" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style
+            x:Key="TensCounterBadge"
+            BasedOn="{StaticResource CounterBadge}"
+            TargetType="Border">
+            <Setter Property="BackgroundColor" Value="#F97316" />
+            <Style.Triggers>
+                <DataTrigger
+                    Binding="{Binding IsTensColumnRelevant}"
+                    TargetType="Border"
+                    Value="False">
+                    <Setter Property="BackgroundColor" Value="#94A3B8" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </ContentPage.Resources>
 
     <Grid
@@ -148,24 +239,21 @@
             <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="6">
                 <Grid ColumnDefinitions="*,*,*,*">
                     <Border
-                        BackgroundColor="#2563EB"
-                        Style="{StaticResource CounterBadge}">
+                        Style="{StaticResource ThousandsCounterBadge}">
                         <Label
                             Style="{StaticResource CounterText}"
                             Text="{Binding ThousandsDigit}" />
                     </Border>
                     <Border
                         Grid.Column="1"
-                        BackgroundColor="#7C3AED"
-                        Style="{StaticResource CounterBadge}">
+                        Style="{StaticResource HundredsCounterBadge}">
                         <Label
                             Style="{StaticResource CounterText}"
                             Text="{Binding HundredsDigit}" />
                     </Border>
                     <Border
                         Grid.Column="2"
-                        BackgroundColor="#F97316"
-                        Style="{StaticResource CounterBadge}">
+                        Style="{StaticResource TensCounterBadge}">
                         <Label
                             Style="{StaticResource CounterText}"
                             Text="{Binding TensDigit}" />
@@ -185,21 +273,21 @@
                         Command="{Binding IncrementPlaceCommand}"
                         CommandParameter="1000"
                         SemanticProperties.Hint="Добавить тысячу"
-                        Style="{StaticResource RodButton}"
+                        Style="{StaticResource ThousandsRodButton}"
                         Text="+" />
                     <Button
                         Grid.Column="1"
                         Command="{Binding IncrementPlaceCommand}"
                         CommandParameter="100"
                         SemanticProperties.Hint="Добавить сотню"
-                        Style="{StaticResource RodButton}"
+                        Style="{StaticResource HundredsRodButton}"
                         Text="+" />
                     <Button
                         Grid.Column="2"
                         Command="{Binding IncrementPlaceCommand}"
                         CommandParameter="10"
                         SemanticProperties.Hint="Добавить десяток"
-                        Style="{StaticResource RodButton}"
+                        Style="{StaticResource TensRodButton}"
                         Text="+" />
                     <Button
                         Grid.Column="3"
@@ -212,6 +300,7 @@
 
                 <controls:AbacusView
                     Grid.Row="2"
+                    MaximumTaskPlaceValue="{Binding MaximumTaskPlaceValue}"
                     SemanticProperties.Description="{Binding AbacusDescription}"
                     Value="{Binding CurrentValue}" />
 
@@ -220,21 +309,21 @@
                         Command="{Binding DecrementPlaceCommand}"
                         CommandParameter="1000"
                         SemanticProperties.Hint="Убрать тысячу"
-                        Style="{StaticResource RodButton}"
+                        Style="{StaticResource ThousandsRodButton}"
                         Text="−" />
                     <Button
                         Grid.Column="1"
                         Command="{Binding DecrementPlaceCommand}"
                         CommandParameter="100"
                         SemanticProperties.Hint="Убрать сотню"
-                        Style="{StaticResource RodButton}"
+                        Style="{StaticResource HundredsRodButton}"
                         Text="−" />
                     <Button
                         Grid.Column="2"
                         Command="{Binding DecrementPlaceCommand}"
                         CommandParameter="10"
                         SemanticProperties.Hint="Убрать десяток"
-                        Style="{StaticResource RodButton}"
+                        Style="{StaticResource TensRodButton}"
                         Text="−" />
                     <Button
                         Grid.Column="3"

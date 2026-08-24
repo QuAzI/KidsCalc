@@ -13,10 +13,12 @@ public sealed class AbacusDrawable : IDrawable
         Color.FromArgb("#F97316"),
         Color.FromArgb("#0F9D78")
     ];
+    private static readonly Color MutedActiveColor = Color.FromArgb("#94A3B8");
 
     private readonly AbacusBuilder _abacusBuilder;
     private int _previousValue;
     private int _targetValue;
+    private int _maximumTaskPlaceValue = 1;
     private float _progress = 1f;
 
     public AbacusDrawable(AbacusBuilder abacusBuilder)
@@ -29,6 +31,11 @@ public sealed class AbacusDrawable : IDrawable
         _previousValue = Math.Clamp(previousValue, 0, AbacusBuilder.MaximumValue);
         _targetValue = Math.Clamp(targetValue, 0, AbacusBuilder.MaximumValue);
         _progress = (float)Math.Clamp(progress, 0d, 1d);
+    }
+
+    public void SetMaximumTaskPlaceValue(int placeValue)
+    {
+        _maximumTaskPlaceValue = Math.Clamp(placeValue, 1, 1_000);
     }
 
     public void Draw(ICanvas canvas, RectF dirtyRect)
@@ -59,6 +66,7 @@ public sealed class AbacusDrawable : IDrawable
             var centerX = dirtyRect.Width * (rodIndex + 0.5f) / rodCount;
             var previousDigit = previousDigits[rodIndex].Value;
             var targetDigit = targetDigits[rodIndex].Value;
+            var isRelevant = targetDigits[rodIndex].PlaceValue <= _maximumTaskPlaceValue;
 
             DrawRod(
                 canvas,
@@ -69,7 +77,8 @@ public sealed class AbacusDrawable : IDrawable
                 step,
                 previousDigit,
                 targetDigit,
-                ActiveColors[rodIndex]);
+                isRelevant ? ActiveColors[rodIndex] : MutedActiveColor,
+                isRelevant);
         }
 
         canvas.RestoreState();
@@ -84,14 +93,18 @@ public sealed class AbacusDrawable : IDrawable
         float step,
         int previousDigit,
         int targetDigit,
-        Color activeColor)
+        Color activeColor,
+        bool isRelevant)
     {
-        canvas.StrokeColor = Color.FromArgb("#475569");
+        canvas.StrokeColor = isRelevant
+            ? Color.FromArgb("#475569")
+            : Color.FromArgb("#94A3B8");
         canvas.StrokeSize = 4f;
         canvas.DrawLine(centerX, rodTop - 8f, centerX, rodBottom + 8f);
 
         // Активные бусины собираются сверху, остальные — снизу.
-        // Между группами остаётся зазор, показывающий значение разряда.
+        // В ненужных для примера колонках обе группы остаются серыми, но их
+        // позиции по-прежнему показывают значение и участвуют в анимации.
         for (var beadIndex = 0; beadIndex < BeadsPerRod; beadIndex++)
         {
             var previousY = GetBeadY(beadIndex, previousDigit, rodTop, rodBottom, step);
@@ -101,8 +114,10 @@ public sealed class AbacusDrawable : IDrawable
                 ? beadIndex < previousDigit
                 : beadIndex < targetDigit;
 
-            canvas.FillColor = isActive ? activeColor : Color.FromArgb("#E2E8F0");
-            canvas.StrokeColor = isActive
+            canvas.FillColor = isActive
+                ? activeColor
+                : Color.FromArgb("#E2E8F0");
+            canvas.StrokeColor = isActive && isRelevant
                 ? Color.FromArgb("#1E293B")
                 : Color.FromArgb("#64748B");
             canvas.StrokeSize = 1.5f;
