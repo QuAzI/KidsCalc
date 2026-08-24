@@ -298,11 +298,79 @@
                         Text="+" />
                 </Grid>
 
-                <controls:AbacusView
-                    Grid.Row="2"
-                    MaximumTaskPlaceValue="{Binding MaximumTaskPlaceValue}"
-                    SemanticProperties.Description="{Binding AbacusDescription}"
-                    Value="{Binding CurrentValue}" />
+                <Grid Grid.Row="2">
+                    <controls:AbacusView
+                        MaximumTaskPlaceValue="{Binding MaximumTaskPlaceValue}"
+                        SemanticProperties.Description="{Binding AbacusDescription}"
+                        Value="{Binding CurrentValue}" />
+
+                    <!-- Прозрачные зоны повторяют четыре колонки счётов:
+                         свайп к верхнему плюсу добавляет, к нижнему минусу вычитает. -->
+                    <Grid ColumnDefinitions="*,*,*,*">
+                        <Grid BackgroundColor="Transparent">
+                            <Grid.GestureRecognizers>
+                                <SwipeGestureRecognizer
+                                    Command="{Binding IncrementPlaceCommand}"
+                                    CommandParameter="1000"
+                                    Direction="Up"
+                                    Threshold="48" />
+                                <SwipeGestureRecognizer
+                                    Command="{Binding DecrementPlaceCommand}"
+                                    CommandParameter="1000"
+                                    Direction="Down"
+                                    Threshold="48" />
+                            </Grid.GestureRecognizers>
+                        </Grid>
+                        <Grid
+                            Grid.Column="1"
+                            BackgroundColor="Transparent">
+                            <Grid.GestureRecognizers>
+                                <SwipeGestureRecognizer
+                                    Command="{Binding IncrementPlaceCommand}"
+                                    CommandParameter="100"
+                                    Direction="Up"
+                                    Threshold="48" />
+                                <SwipeGestureRecognizer
+                                    Command="{Binding DecrementPlaceCommand}"
+                                    CommandParameter="100"
+                                    Direction="Down"
+                                    Threshold="48" />
+                            </Grid.GestureRecognizers>
+                        </Grid>
+                        <Grid
+                            Grid.Column="2"
+                            BackgroundColor="Transparent">
+                            <Grid.GestureRecognizers>
+                                <SwipeGestureRecognizer
+                                    Command="{Binding IncrementPlaceCommand}"
+                                    CommandParameter="10"
+                                    Direction="Up"
+                                    Threshold="48" />
+                                <SwipeGestureRecognizer
+                                    Command="{Binding DecrementPlaceCommand}"
+                                    CommandParameter="10"
+                                    Direction="Down"
+                                    Threshold="48" />
+                            </Grid.GestureRecognizers>
+                        </Grid>
+                        <Grid
+                            Grid.Column="3"
+                            BackgroundColor="Transparent">
+                            <Grid.GestureRecognizers>
+                                <SwipeGestureRecognizer
+                                    Command="{Binding IncrementPlaceCommand}"
+                                    CommandParameter="1"
+                                    Direction="Up"
+                                    Threshold="48" />
+                                <SwipeGestureRecognizer
+                                    Command="{Binding DecrementPlaceCommand}"
+                                    CommandParameter="1"
+                                    Direction="Down"
+                                    Threshold="48" />
+                            </Grid.GestureRecognizers>
+                        </Grid>
+                    </Grid>
+                </Grid>
 
                 <Grid Grid.Row="3" ColumnDefinitions="*,*,*,*">
                     <Button
