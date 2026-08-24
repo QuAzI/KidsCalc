@@ -54,7 +54,7 @@
     </ContentPage.Resources>
 
     <Grid
-        Padding="18,16,18,20"
+        Padding="9,8,9,10"
         ColumnDefinitions="*"
         HorizontalOptions="Center"
         MaximumWidthRequest="540"

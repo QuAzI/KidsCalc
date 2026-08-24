@@ -12,6 +12,26 @@ public sealed class NumericInput : Entry
         TextChanged += OnTextChanged;
     }
 
+    protected override void OnHandlerChanged()
+    {
+        base.OnHandlerChanged();
+
+        // Нативные Entry добавляют нижнюю линию или рамку даже при прозрачном
+        // фоне; убираем это оформление, сохраняя ввод и фокусировку.
+#if ANDROID
+        if (Handler?.PlatformView is Android.Widget.EditText platformInput)
+        {
+            platformInput.BackgroundTintList =
+                Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent);
+        }
+#elif WINDOWS
+        if (Handler?.PlatformView is Microsoft.UI.Xaml.Controls.TextBox platformInput)
+        {
+            platformInput.BorderThickness = new Microsoft.UI.Xaml.Thickness(0);
+        }
+#endif
+    }
+
     private void OnTextChanged(object? sender, TextChangedEventArgs eventArgs)
     {
         if (_isNormalizingText)
