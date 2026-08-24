@@ -169,8 +169,12 @@ Abacus Kids Calculator — одностраничное обучающее пр�
 
 Основной MAUI-проект собирается для:
 
-- `net10.0-android`, минимальная версия Android 8.0 / API 26;
+- `net10.0-android`, минимальная версия Android 7.0 / API 24;
 - `net10.0-windows10.0.19041.0`, минимальная версия Windows 10.0.17763.0.
+
+Android API 24 задан через `SupportedOSPlatformVersion` и определяет
+минимальную версию устройства. Целевой API сборки — Android 16 / API 36,
+который предоставляет `net10.0-android`.
 
 iOS и MacCatalyst не входят в `TargetFrameworks` production-проекта. Наличие шаблонных каталогов `Platforms/iOS` и `Platforms/MacCatalyst` не считается поддержкой платформ.
 
