@@ -16,6 +16,7 @@ public sealed class MainViewModel : ViewModelBase
     private bool _incorrectCountedForTask;
     private FeedbackState _feedbackState;
     private string _feedbackText = string.Empty;
+    private string _answerText = string.Empty;
 
     public MainViewModel(ITaskGenerator taskGenerator, ISoundService? soundService = null)
     {
@@ -44,6 +45,7 @@ public sealed class MainViewModel : ViewModelBase
             if (SetProperty(ref _currentTask, value))
             {
                 OnPropertyChanged(nameof(ProblemText));
+                OnPropertyChanged(nameof(ProblemPrefix));
                 OnPropertyChanged(nameof(IsMatchingAnswer));
             }
         }
@@ -58,6 +60,12 @@ public sealed class MainViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(AbacusDescription));
                 OnPropertyChanged(nameof(IsMatchingAnswer));
+                // Счётчики разрядов находятся в отдельных элементах над кнопками,
+                // поэтому каждый из них должен обновляться вместе с общим числом.
+                OnPropertyChanged(nameof(ThousandsDigit));
+                OnPropertyChanged(nameof(HundredsDigit));
+                OnPropertyChanged(nameof(TensDigit));
+                OnPropertyChanged(nameof(OnesDigit));
                 NotifyCommandStates();
             }
         }
@@ -92,13 +100,48 @@ public sealed class MainViewModel : ViewModelBase
         private set => SetProperty(ref _feedbackText, value);
     }
 
+    public string AnswerText
+    {
+        get => _answerText;
+        set
+        {
+            // Ручной ввод синхронизирует счёты с полем ответа, но пустое поле
+            // оставляет текущее положение бусин и снова показывает placeholder.
+            var normalized = NormalizeAnswerText(value);
+            if (!SetProperty(ref _answerText, normalized))
+            {
+                return;
+            }
+
+            if (int.TryParse(normalized, out var enteredValue))
+            {
+                FeedbackState = FeedbackState.None;
+                FeedbackText = string.Empty;
+                CurrentValue = enteredValue;
+            }
+
+            AnswerInputChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
     public string ProblemText => IsCorrectFeedback
         ? CurrentTask.SolvedDisplayText
         : CurrentTask.DisplayText;
 
+    public string ProblemPrefix =>
+        $"{CurrentTask.LeftOperand} {CurrentTask.OperationSymbol} {CurrentTask.RightOperand} =";
+
     public string PromptText => IsCorrectFeedback ? "Верно!" : "Реши пример";
 
     public string AbacusDescription => $"На счётах число {CurrentValue}";
+
+    public int ThousandsDigit => (CurrentValue / 1_000) % 10;
+
+    public int HundredsDigit => (CurrentValue / 100) % 10;
+
+    public int TensDigit => (CurrentValue / 10) % 10;
+
+    public int OnesDigit => CurrentValue % 10;
 
     public bool IsMatchingAnswer => CurrentValue == CurrentTask.Answer;
 
@@ -118,6 +161,8 @@ public sealed class MainViewModel : ViewModelBase
 
     public event EventHandler? BeadsMoved;
 
+    public event EventHandler? AnswerInputChanged;
+
     private void ChangePlace(object? parameter, int direction)
     {
         var placeValue = ParsePlace(parameter);
@@ -128,6 +173,7 @@ public sealed class MainViewModel : ViewModelBase
 
         FeedbackState = FeedbackState.None;
         FeedbackText = string.Empty;
+        ClearAnswerInput();
         CurrentValue += placeValue * direction;
         BeadsMoved?.Invoke(this, EventArgs.Empty);
         _soundService?.PlayBead();
@@ -165,6 +211,13 @@ public sealed class MainViewModel : ViewModelBase
         return int.TryParse(parameter?.ToString(), out var parsed) ? parsed : 0;
     }
 
+    private static string NormalizeAnswerText(string? value) =>
+        new(
+            (value ?? string.Empty)
+                .Where(character => character is >= '0' and <= '9')
+                .Take(4)
+                .ToArray());
+
     private void CheckAnswer()
     {
         // Серия ответов повышает уровень только один раз, а ошибка в одном
@@ -185,6 +238,10 @@ public sealed class MainViewModel : ViewModelBase
             }
 
             FeedbackState = FeedbackState.Correct;
+            SetProperty(
+                ref _answerText,
+                CurrentTask.Answer.ToString(),
+                nameof(AnswerText));
             _soundService?.PlayCorrect();
             return;
         }
@@ -213,7 +270,16 @@ public sealed class MainViewModel : ViewModelBase
         _incorrectCountedForTask = false;
         FeedbackText = string.Empty;
         FeedbackState = FeedbackState.None;
+        ClearAnswerInput();
         CurrentValue = CurrentTask.LeftOperand;
+    }
+
+    private void ClearAnswerInput()
+    {
+        if (SetProperty(ref _answerText, string.Empty, nameof(AnswerText)))
+        {
+            AnswerInputChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     private void NotifyCommandStates()

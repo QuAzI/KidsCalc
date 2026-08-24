@@ -44,7 +44,7 @@ public sealed class AbacusDrawable : IDrawable
         var previousDigits = _abacusBuilder.BuildDigits(_previousValue);
         var targetDigits = _abacusBuilder.BuildDigits(_targetValue);
         var rodTop = 16f;
-        var rodBottom = Math.Max(rodTop + 100f, dirtyRect.Height - 54f);
+        var rodBottom = Math.Max(rodTop + 100f, dirtyRect.Height - 16f);
         var beadRadius = Math.Clamp(dirtyRect.Width / 24f, 8f, 16f);
         var beadDiameter = beadRadius * 2f;
         var step = Math.Min(
@@ -91,7 +91,7 @@ public sealed class AbacusDrawable : IDrawable
         canvas.DrawLine(centerX, rodTop - 8f, centerX, rodBottom + 8f);
 
         // Активные бусины собираются сверху, остальные — снизу.
-        // Между группами остаётся зазор, поэтому цифра читается без текста.
+        // Между группами остаётся зазор, показывающий значение разряда.
         for (var beadIndex = 0; beadIndex < BeadsPerRod; beadIndex++)
         {
             var previousY = GetBeadY(beadIndex, previousDigit, rodTop, rodBottom, step);
@@ -117,19 +117,6 @@ public sealed class AbacusDrawable : IDrawable
                 beadRadius * 2f,
                 beadRadius * 2f);
         }
-
-        canvas.FillColor = activeColor;
-        canvas.FillRoundedRectangle(centerX - 20f, rodBottom + 16f, 40f, 32f, 10f);
-        canvas.FontColor = Colors.White;
-        canvas.FontSize = 18f;
-        canvas.DrawString(
-            targetDigit.ToString(),
-            centerX - 20f,
-            rodBottom + 16f,
-            40f,
-            32f,
-            HorizontalAlignment.Center,
-            VerticalAlignment.Center);
     }
 
     private static float GetBeadY(

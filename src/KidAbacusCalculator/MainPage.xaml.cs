@@ -19,6 +19,7 @@ public partial class MainPage : ContentPage
         BindingContext = viewModel;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         _viewModel.BeadsMoved += OnBeadsMoved;
+        _viewModel.AnswerInputChanged += OnAnswerInputChanged;
         Loaded += OnLoaded;
     }
 
@@ -32,6 +33,19 @@ public partial class MainPage : ContentPage
     {
         // Быстрый перебор бусин не должен сразу засчитывать ответ:
         // проверка только после паузы после последнего движения.
+        ScheduleAnswerCheck();
+    }
+
+    private void OnAnswerInputChanged(object? sender, EventArgs eventArgs)
+    {
+        // Очистка поля означает, что ответ ещё не введён; иначе используем
+        // ту же паузу, что и для бусин, чтобы набор нескольких цифр не прерывался.
+        if (string.IsNullOrEmpty(_viewModel.AnswerText))
+        {
+            CancelAnswerCheck();
+            return;
+        }
+
         ScheduleAnswerCheck();
     }
 

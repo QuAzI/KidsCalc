@@ -16,6 +16,7 @@ internal static class Program
         ("MainViewModel повышает уровень", MainViewModelRaisesDifficulty),
         ("MainViewModel меняет разряды колонками", MainViewModelChangesPlaces),
         ("MainViewModel переносит и занимает разряды", MainViewModelCarriesAndBorrows),
+        ("MainViewModel принимает числовой ввод", MainViewModelAcceptsNumericInput),
         ("MainViewModel включает звуки бусин и верного ответа", MainViewModelPlaysSounds)
     ];
 
@@ -228,6 +229,10 @@ internal static class Program
         viewModel.IncrementPlaceCommand.Execute("1");
         viewModel.IncrementPlaceCommand.Execute("1000");
         Equal(1_010, viewModel.CurrentValue);
+        Equal(1, viewModel.ThousandsDigit);
+        Equal(0, viewModel.HundredsDigit);
+        Equal(1, viewModel.TensDigit);
+        Equal(0, viewModel.OnesDigit);
 
         True(
             viewModel.DecrementPlaceCommand.CanExecute("100"),
@@ -257,6 +262,26 @@ internal static class Program
         Equal(2, sounds.BeadCount);
         viewModel.CheckAnswerCommand.Execute(null);
         Equal(1, sounds.CorrectCount);
+    }
+
+    private static void MainViewModelAcceptsNumericInput()
+    {
+        var generator = new FakeTaskGenerator(
+            new TaskItem(3, 2, MathOperation.Addition));
+        var viewModel = new MainViewModel(generator);
+
+        Equal(string.Empty, viewModel.AnswerText);
+        viewModel.AnswerText = "1x2";
+        Equal("12", viewModel.AnswerText);
+        Equal(12, viewModel.CurrentValue);
+
+        viewModel.AnswerText = "12345";
+        Equal("1234", viewModel.AnswerText);
+        Equal(1_234, viewModel.CurrentValue);
+
+        viewModel.IncrementPlaceCommand.Execute("1");
+        Equal(string.Empty, viewModel.AnswerText);
+        Equal(1_235, viewModel.CurrentValue);
     }
 
     private static void Equal<T>(T expected, T actual)

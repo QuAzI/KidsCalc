@@ -36,6 +36,21 @@
                 </VisualStateGroupList>
             </Setter>
         </Style>
+        <Style x:Key="CounterBadge" TargetType="Border">
+            <Setter Property="HeightRequest" Value="32" />
+            <Setter Property="HorizontalOptions" Value="Center" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 10" />
+            <Setter Property="StrokeThickness" Value="0" />
+            <Setter Property="WidthRequest" Value="40" />
+        </Style>
+        <Style x:Key="CounterText" TargetType="Label">
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="VerticalTextAlignment" Value="Center" />
+        </Style>
     </ContentPage.Resources>
 
     <Grid
@@ -76,21 +91,50 @@
                         </DataTrigger>
                     </Label.Triggers>
                 </Label>
-                <Label
-                    FontAttributes="Bold"
-                    FontSize="44"
+                <HorizontalStackLayout
                     SemanticProperties.HeadingLevel="Level1"
-                    Text="{Binding ProblemText}"
-                    TextColor="{AppThemeBinding Light=#172554, Dark=#FFFFFF}">
-                    <Label.Triggers>
-                        <DataTrigger
-                            Binding="{Binding IsCorrectFeedback}"
-                            TargetType="Label"
-                            Value="True">
-                            <Setter Property="TextColor" Value="#16A34A" />
-                        </DataTrigger>
-                    </Label.Triggers>
-                </Label>
+                    Spacing="8">
+                    <Label
+                        FontAttributes="Bold"
+                        FontSize="44"
+                        Text="{Binding ProblemPrefix}"
+                        TextColor="{AppThemeBinding Light=#172554, Dark=#FFFFFF}"
+                        VerticalTextAlignment="Center">
+                        <Label.Triggers>
+                            <DataTrigger
+                                Binding="{Binding IsCorrectFeedback}"
+                                TargetType="Label"
+                                Value="True">
+                                <Setter Property="TextColor" Value="#16A34A" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <controls:NumericInput
+                        BackgroundColor="Transparent"
+                        FontAttributes="Bold"
+                        FontSize="44"
+                        HorizontalTextAlignment="Center"
+                        IsReadOnly="{Binding IsCorrectFeedback}"
+                        MaxLength="4"
+                        MinimumWidthRequest="64"
+                        Placeholder="?"
+                        PlaceholderColor="{AppThemeBinding Light=#172554, Dark=#FFFFFF}"
+                        SemanticProperties.Description="Ответ"
+                        Text="{Binding AnswerText, Mode=TwoWay}"
+                        TextColor="{AppThemeBinding Light=#172554, Dark=#FFFFFF}"
+                        VerticalTextAlignment="Center"
+                        WidthRequest="104">
+                        <controls:NumericInput.Triggers>
+                            <DataTrigger
+                                Binding="{Binding IsCorrectFeedback}"
+                                TargetType="controls:NumericInput"
+                                Value="True">
+                                <Setter Property="PlaceholderColor" Value="#16A34A" />
+                                <Setter Property="TextColor" Value="#16A34A" />
+                            </DataTrigger>
+                        </controls:NumericInput.Triggers>
+                    </controls:NumericInput>
+                </HorizontalStackLayout>
             </VerticalStackLayout>
         </Border>
 
@@ -101,8 +145,42 @@
             Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#94A3B8}"
             StrokeShape="RoundRectangle 24"
             StrokeThickness="2">
-            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="6">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="6">
                 <Grid ColumnDefinitions="*,*,*,*">
+                    <Border
+                        BackgroundColor="#2563EB"
+                        Style="{StaticResource CounterBadge}">
+                        <Label
+                            Style="{StaticResource CounterText}"
+                            Text="{Binding ThousandsDigit}" />
+                    </Border>
+                    <Border
+                        Grid.Column="1"
+                        BackgroundColor="#7C3AED"
+                        Style="{StaticResource CounterBadge}">
+                        <Label
+                            Style="{StaticResource CounterText}"
+                            Text="{Binding HundredsDigit}" />
+                    </Border>
+                    <Border
+                        Grid.Column="2"
+                        BackgroundColor="#F97316"
+                        Style="{StaticResource CounterBadge}">
+                        <Label
+                            Style="{StaticResource CounterText}"
+                            Text="{Binding TensDigit}" />
+                    </Border>
+                    <Border
+                        Grid.Column="3"
+                        BackgroundColor="#0F9D78"
+                        Style="{StaticResource CounterBadge}">
+                        <Label
+                            Style="{StaticResource CounterText}"
+                            Text="{Binding OnesDigit}" />
+                    </Border>
+                </Grid>
+
+                <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*">
                     <Button
                         Command="{Binding IncrementPlaceCommand}"
                         CommandParameter="1000"
@@ -133,11 +211,11 @@
                 </Grid>
 
                 <controls:AbacusView
-                    Grid.Row="1"
+                    Grid.Row="2"
                     SemanticProperties.Description="{Binding AbacusDescription}"
                     Value="{Binding CurrentValue}" />
 
-                <Grid Grid.Row="2" ColumnDefinitions="*,*,*,*">
+                <Grid Grid.Row="3" ColumnDefinitions="*,*,*,*">
                     <Button
                         Command="{Binding DecrementPlaceCommand}"
                         CommandParameter="1000"

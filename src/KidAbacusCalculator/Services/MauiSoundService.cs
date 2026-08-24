@@ -18,7 +18,12 @@ public sealed class MauiSoundService : ISoundService
 #endif
 
 #if ANDROID
-    private Android.Media.AudioTrack? _audioTrack;
+    private const string AndroidLogTag = "KidAbacusAudio";
+    private readonly HashSet<int> _loadedAndroidSounds = [];
+    private readonly Dictionary<int, float> _pendingAndroidSounds = [];
+    private Android.Media.SoundPool? _soundPool;
+    private int _beadSoundId;
+    private int _correctSoundId;
 #endif
 
     public MauiSoundService()
@@ -31,7 +36,7 @@ public sealed class MauiSoundService : ISoundService
                 ToneMixer.CreateSilence(SampleRate, durationMs: 20),
                 ToneMixer.CreatePlink(SampleRate, frequencyHz: 523.25, durationMs: 220, peak: 0.10)));
 
-#if WINDOWS
+#if WINDOWS || ANDROID
         _warmupSound = ToneMixer.WrapWav(warmupPcm, SampleRate);
         _beadSound = ToneMixer.WrapWav(beadPcm, SampleRate);
         _correctSound = ToneMixer.WrapWav(correctPcm, SampleRate);
@@ -50,7 +55,11 @@ public sealed class MauiSoundService : ISoundService
         }
 
         _warmedUp = true;
+#if ANDROID
+        MainThread.BeginInvokeOnMainThread(PrepareAndroidSounds);
+#else
         Play(_warmupSound, volume: 0.001);
+#endif
     }
 
     public void PlayBead() => Play(_beadSound, volume: 0.40);
@@ -64,7 +73,8 @@ public sealed class MauiSoundService : ISoundService
 #if WINDOWS
             _ = PlayWindowsAsync(sound, volume);
 #elif ANDROID
-            _ = Task.Run(() => PlayAndroid(sound, (float)volume));
+            MainThread.BeginInvokeOnMainThread(
+                () => PlayAndroid(sound, (float)Math.Clamp(volume * 2.5, 0d, 1d)));
 #endif
         }
         catch
@@ -117,94 +127,109 @@ public sealed class MauiSoundService : ISoundService
 #endif
 
 #if ANDROID
-    private void PlayAndroid(byte[] pcm, float volume)
+    private void PrepareAndroidSounds()
     {
+        lock (_playGate)
+        {
+            if (_soundPool is not null)
+            {
+                return;
+            }
+
+            try
+            {
+                // SoundPool предназначен для коротких эффектов и хранит их готовыми
+                // к повторному запуску, не обрывая звук пересозданием AudioTrack.
+                var attributes = (new Android.Media.AudioAttributes.Builder())!
+                    .SetUsage(Android.Media.AudioUsageKind.Game)!
+                    .SetContentType(Android.Media.AudioContentType.Sonification)!
+                    .Build();
+                if (attributes is null)
+                {
+                    return;
+                }
+
+                _soundPool = (new Android.Media.SoundPool.Builder())!
+                    .SetMaxStreams(3)!
+                    .SetAudioAttributes(attributes)!
+                    .Build();
+                if (_soundPool is null)
+                {
+                    return;
+                }
+
+                _soundPool.LoadComplete += OnAndroidSoundLoaded;
+                _beadSoundId = LoadAndroidSound("kid-abacus-bead-v2.wav", _beadSound);
+                _correctSoundId = LoadAndroidSound("kid-abacus-correct-v2.wav", _correctSound);
+            }
+            catch (Exception exception)
+            {
+                Android.Util.Log.Warn(AndroidLogTag, $"Не удалось подготовить звук: {exception}");
+            }
+        }
+    }
+
+    private int LoadAndroidSound(string fileName, byte[] wav)
+    {
+        var path = Path.Combine(FileSystem.CacheDirectory, fileName);
+        File.WriteAllBytes(path, wav);
+        return _soundPool!.Load(path, priority: 1);
+    }
+
+    private void OnAndroidSoundLoaded(
+        object? sender,
+        Android.Media.SoundPool.LoadCompleteEventArgs eventArgs)
+    {
+        lock (_playGate)
+        {
+            if (eventArgs.Status != 0)
+            {
+                _pendingAndroidSounds.Remove(eventArgs.SampleId);
+                Android.Util.Log.Warn(
+                    AndroidLogTag,
+                    $"SoundPool не загрузил эффект {eventArgs.SampleId}: {eventArgs.Status}");
+                return;
+            }
+
+            _loadedAndroidSounds.Add(eventArgs.SampleId);
+            if (_pendingAndroidSounds.Remove(eventArgs.SampleId, out var volume))
+            {
+                _soundPool?.Play(eventArgs.SampleId, volume, volume, 1, 0, 1f);
+            }
+        }
+    }
+
+    private void PlayAndroid(byte[] sound, float volume)
+    {
+        PrepareAndroidSounds();
+
         lock (_playGate)
         {
             try
             {
-                PlayAndroidLocked(pcm, volume);
+                var soundId = ReferenceEquals(sound, _beadSound)
+                    ? _beadSoundId
+                    : _correctSoundId;
+                if (soundId <= 0)
+                {
+                    return;
+                }
+
+                // Первая попытка может прийти до асинхронной загрузки: запоминаем
+                // её и воспроизводим сразу после LoadComplete, не теряя нажатие.
+                if (!_loadedAndroidSounds.Contains(soundId))
+                {
+                    _pendingAndroidSounds[soundId] = volume;
+                    return;
+                }
+
+                _soundPool?.Play(soundId, volume, volume, 1, 0, 1f);
             }
-            catch
+            catch (Exception exception)
             {
-                ReleaseAndroidTrack();
+                Android.Util.Log.Warn(AndroidLogTag, $"Не удалось воспроизвести звук: {exception}");
             }
         }
-    }
-
-    // STREAM не стартует, пока не заполнен аппаратный буфер: щелчок бусины ~40 мс
-    // короче этого буфера, поэтому Write заканчивался, а динамик молчал.
-    // STATIC загружает весь PCM и сразу Play. 44100 Гц — родная частота большинства устройств.
-    private void PlayAndroidLocked(byte[] pcm, float volume)
-    {
-        var minBuffer = Android.Media.AudioTrack.GetMinBufferSize(
-            SampleRate,
-            Android.Media.ChannelOut.Mono,
-            Android.Media.Encoding.Pcm16bit);
-        if (minBuffer <= 0)
-        {
-            minBuffer = pcm.Length;
-        }
-
-        var attributes = new Android.Media.AudioAttributes.Builder()
-            .SetUsage(Android.Media.AudioUsageKind.Media)
-            .SetContentType(Android.Media.AudioContentType.Music)
-            .Build();
-        var format = new Android.Media.AudioFormat.Builder()
-            .SetEncoding(Android.Media.Encoding.Pcm16bit)
-            .SetSampleRate(SampleRate)
-            .SetChannelMask(Android.Media.ChannelOut.Mono)
-            .Build();
-        if (attributes is null || format is null)
-        {
-            return;
-        }
-
-        ReleaseAndroidTrack();
-        _audioTrack = new Android.Media.AudioTrack.Builder()
-            .SetAudioAttributes(attributes)
-            .SetAudioFormat(format)
-            .SetBufferSizeInBytes(Math.Max(minBuffer, pcm.Length))
-            .SetTransferMode(Android.Media.AudioTrackMode.Static)
-            .Build();
-
-        if (_audioTrack is null || _audioTrack.State != Android.Media.AudioTrackState.Initialized)
-        {
-            ReleaseAndroidTrack();
-            return;
-        }
-
-        _audioTrack.SetVolume(Math.Clamp(volume, 0f, 1f));
-        var written = _audioTrack.Write(pcm, 0, pcm.Length, Android.Media.WriteMode.Blocking);
-        if (written <= 0)
-        {
-            ReleaseAndroidTrack();
-            return;
-        }
-
-        _audioTrack.Play();
-    }
-
-    private void ReleaseAndroidTrack()
-    {
-        if (_audioTrack is null)
-        {
-            return;
-        }
-
-        try
-        {
-            if (_audioTrack.PlayState != Android.Media.PlayState.Stopped)
-            {
-                _audioTrack.Stop();
-            }
-        }
-        catch
-        {
-        }
-
-        _audioTrack.Release();
-        _audioTrack = null;
     }
 #endif
 
