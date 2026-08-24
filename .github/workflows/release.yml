@@ -11,7 +11,35 @@ env:
   DOTNET_NOLOGO: "true"
 
 jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve artifact version
+        id: version
+        shell: pwsh
+        # Тег является источником версии релиза; при ручном запуске используется
+        # ApplicationDisplayVersion, чтобы имя артефакта не зависело от ветки.
+        run: |
+          [xml]$project = Get-Content src/KidAbacusCalculator/KidAbacusCalculator.csproj -Raw
+          $version = if ($env:GITHUB_REF_TYPE -eq "tag") {
+            $env:GITHUB_REF_NAME -replace "^v", ""
+          } else {
+            $project.Project.PropertyGroup.ApplicationDisplayVersion
+          }
+
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw "Unable to resolve artifact version"
+          }
+
+          "value=$version" >> $env:GITHUB_OUTPUT
+
   windows:
+    needs: metadata
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -52,10 +80,11 @@ jobs:
       - name: Upload Windows win-x64
         uses: actions/upload-artifact@v4
         with:
-          name: kidabacus-windows-win-x64
+          name: KidAbacusCalculator-${{ needs.metadata.outputs.version }}-windows-x64
           path: artifacts/windows-win-x64/
 
   android:
+    needs: metadata
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -119,18 +148,18 @@ jobs:
             find artifacts/android src/KidAbacusCalculator/bin -type f 2>/dev/null | head -n 50 || true
             exit 1
           fi
-          cp "${apks[0]}" "release-apk/KidAbacusCalculator-android-ci-signed.apk"
+          cp "${apks[0]}" "release-apk/KidAbacusCalculator-${{ needs.metadata.outputs.version }}-arm64.apk"
           echo "Packed ${apks[0]}"
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
-          name: kidabacus-android-apk
-          path: release-apk/KidAbacusCalculator-android-ci-signed.apk
+          name: KidAbacusCalculator-${{ needs.metadata.outputs.version }}-arm64
+          path: release-apk/KidAbacusCalculator-${{ needs.metadata.outputs.version }}-arm64.apk
 
   github-release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [windows, android]
+    needs: [metadata, windows, android]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -141,18 +170,19 @@ jobs:
           path: dist
 
       - name: Pack archives
+        # Имена файлов отражают приложение, версию, платформу и архитектуру.
         run: |
           set -euo pipefail
           cd dist
-          zip -r "../KidAbacusCalculator-windows-win-x64.zip" kidabacus-windows-win-x64
-          cp kidabacus-android-apk/KidAbacusCalculator-android-ci-signed.apk ../KidAbacusCalculator-android-ci-signed.apk
+          zip -r "../KidAbacusCalculator-${{ needs.metadata.outputs.version }}-windows-x64.zip" "KidAbacusCalculator-${{ needs.metadata.outputs.version }}-windows-x64"
+          cp "KidAbacusCalculator-${{ needs.metadata.outputs.version }}-arm64/KidAbacusCalculator-${{ needs.metadata.outputs.version }}-arm64.apk" "../KidAbacusCalculator-${{ needs.metadata.outputs.version }}-arm64.apk"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            KidAbacusCalculator-windows-win-x64.zip
-            KidAbacusCalculator-android-ci-signed.apk
+            KidAbacusCalculator-${{ needs.metadata.outputs.version }}-windows-x64.zip
+            KidAbacusCalculator-${{ needs.metadata.outputs.version }}-arm64.apk
           generate_release_notes: true
           body: |
             ## Artifacts
